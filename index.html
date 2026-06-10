@@ -1,0 +1,3934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xero Coaching Hub — Team Coaching Dashboard</title>
+<meta name="description" content="Team coaching dashboard for Xero partner sales — GROW plans, Gong call analysis, pipeline tracking and meeting prep. All data stays in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231AB4D7'/%3E%3Ctext x='16' y='22' font-size='17' font-weight='bold' font-family='Arial' fill='white' text-anchor='middle'%3EX%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ─── CSS Variables / Design Tokens ─────────────────────────────────── */
+:root {
+  --xero-blue: #1AB4D7;
+  --xero-blue-dark: #0f9bba;
+  --xero-blue-light: #e8f8fc;
+  --sidebar-bg: #111920;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #1AB4D7;
+  --sidebar-hover: #1e2d3d;
+  --topbar-bg: #ffffff;
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --green: #22c55e;
+  --green-bg: #f0fdf4;
+  --amber: #f59e0b;
+  --amber-bg: #fffbeb;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --purple: #8b5cf6;
+  --purple-bg: #f5f3ff;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+  --sidebar-width: 240px;
+  --topbar-height: 60px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: var(--font); }
+input, textarea, select { font-family: var(--font); }
+ul { list-style: none; }
+
+/* ─── Layout ─────────────────────────────────────────────────────────── */
+#app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── Sidebar ────────────────────────────────────────────────────────── */
+#sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.sidebar-logo-icon {
+  width: 34px; height: 34px;
+  background: var(--xero-blue);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 18px; font-weight: 700;
+}
+.sidebar-logo-text { color: #fff; font-size: 15px; font-weight: 600; line-height: 1.2; }
+.sidebar-logo-sub { color: var(--sidebar-text); font-size: 11px; }
+
+.sidebar-section { padding: 16px 10px 4px; }
+.sidebar-section-label {
+  color: rgba(148,163,184,.5);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 0 8px 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-size: 13.5px;
+  margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--sidebar-hover); color: #e2e8f0; }
+.nav-item.active { background: rgba(26,180,215,.12); color: var(--xero-blue); }
+.nav-item .ti { font-size: 17px; flex-shrink: 0; }
+.nav-item-badge {
+  margin-left: auto;
+  background: var(--xero-blue);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.sidebar-sellers { padding: 4px 10px 16px; }
+.seller-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-size: 13px;
+}
+.seller-nav-item:hover { background: var(--sidebar-hover); color: #e2e8f0; }
+.seller-nav-item.active { background: rgba(26,180,215,.12); color: var(--xero-blue); }
+.seller-avatar-sm {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+  flex-shrink: 0;
+}
+.seller-nav-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seller-nav-score {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--xero-blue);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar-footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  font-size: 12.5px;
+  background: none;
+  border: none;
+  transition: background .15s, color .15s;
+  width: 100%;
+  text-align: left;
+}
+.sidebar-footer-btn:hover { background: var(--sidebar-hover); color: #e2e8f0; }
+.sidebar-footer-btn .ti { font-size: 16px; }
+
+/* ─── Main content area ──────────────────────────────────────────────── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Topbar ─────────────────────────────────────────────────────────── */
+#topbar {
+  height: var(--topbar-height);
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title { font-size: 16px; font-weight: 600; flex: 1; }
+.topbar-period {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+.topbar-actions { display: flex; gap: 8px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-primary { background: var(--xero-blue); color: white; }
+.btn-primary:hover { background: var(--xero-blue-dark); }
+.btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-danger { background: var(--red); color: white; }
+.btn-danger:hover { background: #dc2626; }
+
+/* ─── Content / scrollable area ─────────────────────────────────────── */
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* ─── Views (hidden by default) ─────────────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ─── Cards ──────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 14px; font-weight: 600; }
+.card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ─── Metric cards ───────────────────────────────────────────────────── */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.metric-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.metric-icon.blue { background: var(--xero-blue-light); color: var(--xero-blue); }
+.metric-icon.green { background: var(--green-bg); color: var(--green); }
+.metric-icon.amber { background: var(--amber-bg); color: var(--amber); }
+.metric-icon.purple { background: var(--purple-bg); color: var(--purple); }
+.metric-value { font-size: 26px; font-weight: 700; line-height: 1; }
+.metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.metric-delta { font-size: 11px; font-weight: 500; margin-top: 6px; }
+.metric-delta.up { color: var(--green); }
+.metric-delta.down { color: var(--red); }
+
+/* ─── Seller Grid ────────────────────────────────────────────────────── */
+.seller-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.seller-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  cursor: pointer;
+  transition: box-shadow .15s, border-color .15s;
+}
+.seller-card:hover { box-shadow: var(--shadow-md); border-color: var(--xero-blue); }
+.seller-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.seller-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+  flex-shrink: 0;
+}
+.seller-name { font-size: 14px; font-weight: 600; }
+.seller-role { font-size: 12px; color: var(--text-muted); }
+.seller-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.seller-stat { text-align: center; }
+.seller-stat-value { font-size: 18px; font-weight: 700; color: var(--text); }
+.seller-stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.seller-progress { margin-top: 4px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+.progress-fill.blue { background: var(--xero-blue); }
+.progress-fill.green { background: var(--green); }
+.progress-fill.amber { background: var(--amber); }
+.progress-fill.red { background: var(--red); }
+
+/* ─── Badge ──────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-green { background: var(--green-bg); color: #15803d; }
+.badge-amber { background: var(--amber-bg); color: #92400e; }
+.badge-red { background: var(--red-bg); color: #991b1b; }
+.badge-blue { background: var(--xero-blue-light); color: var(--xero-blue-dark); }
+.badge-purple { background: var(--purple-bg); color: #6d28d9; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+
+/* ─── Tabs ───────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .15s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--xero-blue); border-bottom-color: var(--xero-blue); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ─── Form elements ──────────────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text);
+  background: white;
+  transition: border-color .15s;
+  outline: none;
+}
+.form-control:focus { border-color: var(--xero-blue); box-shadow: 0 0 0 3px rgba(26,180,215,.1); }
+textarea.form-control { resize: vertical; min-height: 100px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ─── Skill bars ─────────────────────────────────────────────────────── */
+.skill-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.skill-bar-label { font-size: 12px; color: var(--text-muted); width: 160px; flex-shrink: 0; }
+.skill-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.skill-bar-fill { height: 100%; border-radius: 4px; background: var(--xero-blue); transition: width .3s; }
+.skill-bar-score { font-size: 12px; font-weight: 600; width: 28px; text-align: right; }
+
+/* ─── Capability ratings ─────────────────────────────────────────────── */
+.cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cap-item {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.cap-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.cap-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+.cap-rating { display: flex; gap: 6px; }
+.cap-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 5px;
+  border: 1.5px solid var(--border);
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.cap-btn:hover { border-color: var(--xero-blue); color: var(--xero-blue); }
+.cap-btn.active-1 { background: #fef2f2; border-color: #ef4444; color: #ef4444; }
+.cap-btn.active-2 { background: #fffbeb; border-color: #f59e0b; color: #f59e0b; }
+.cap-btn.active-3 { background: var(--xero-blue-light); border-color: var(--xero-blue); color: var(--xero-blue); }
+.cap-btn.active-4 { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+
+/* ─── Coaching moment cards ──────────────────────────────────────────── */
+.moment-card {
+  border-left: 3px solid var(--border);
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 0 7px 7px 0;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.moment-card.flag { border-left-color: var(--amber); }
+.moment-card.positive { border-left-color: var(--green); }
+.moment-card.coaching { border-left-color: var(--xero-blue); }
+.moment-label { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+
+/* ─── Pipeline table ─────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--border);
+  background: #f8fafc;
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.stage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ─── Coaching notes ─────────────────────────────────────────────────── */
+.note-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--card-bg);
+}
+.note-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.note-date { font-size: 11px; color: var(--text-muted); }
+.note-type { font-size: 11px; font-weight: 600; }
+.note-body { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+.note-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ─── Activity feed ──────────────────────────────────────────────────── */
+.activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  margin-top: 2px;
+}
+.activity-content { flex: 1; }
+.activity-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
+.activity-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+/* ─── GROW plan ──────────────────────────────────────────────────────── */
+.grow-section {
+  border-left: 3px solid var(--xero-blue);
+  padding: 14px 16px;
+  background: var(--bg);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 16px;
+}
+.grow-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--xero-blue);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Seller profile header ──────────────────────────────────────────── */
+.profile-header {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.profile-avatar {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 700;
+  flex-shrink: 0;
+}
+.profile-info { flex: 1; }
+.profile-name { font-size: 22px; font-weight: 700; }
+.profile-role { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.profile-tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.profile-stats { display: flex; gap: 24px; }
+.profile-stat { text-align: center; }
+.profile-stat-value { font-size: 24px; font-weight: 700; }
+.profile-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ─── AI loading spinner ─────────────────────────────────────────────── */
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--xero-blue-light);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--xero-blue-dark);
+  margin-bottom: 16px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(26,180,215,.3);
+  border-top-color: var(--xero-blue);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── API key modal ──────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: white;
+  border-radius: 14px;
+  padding: 32px;
+  width: 480px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.modal-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+
+/* ─── Gong analysis result ───────────────────────────────────────────── */
+.analysis-score-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.score-pill {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  text-align: center;
+  flex: 1;
+  min-width: 90px;
+}
+.score-pill-value { font-size: 28px; font-weight: 700; color: var(--xero-blue); }
+.score-pill-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ─── Grid helpers ───────────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.mb-4 { margin-bottom: 4px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.flex-1 { flex: 1; }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* ─── Divider ────────────────────────────────────────────────────────── */
+hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ─── Empty states ───────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+.empty-state .ti { font-size: 40px; margin-bottom: 12px; display: block; }
+.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; }
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* ─── Section headers ────────────────────────────────────────────────── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 15px; font-weight: 700; }
+.section-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ─── Add seller modal fields ────────────────────────────────────────── */
+.color-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.color-swatch {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color .15s;
+}
+.color-swatch.selected { border-color: #1e293b; }
+
+/* ─── CSV Import Wizard ──────────────────────────────────────────────── */
+.import-type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.import-type-card {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.import-type-card:hover { border-color: var(--xero-blue); background: var(--xero-blue-light); }
+.import-type-card.selected { border-color: var(--xero-blue); background: var(--xero-blue-light); }
+.import-type-card .ti { font-size: 26px; display: block; margin-bottom: 8px; }
+.import-type-card .label { font-size: 12px; font-weight: 600; }
+.import-type-card .sublabel { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 16px;
+}
+.drop-zone:hover, .drop-zone.dragover { border-color: var(--xero-blue); background: var(--xero-blue-light); }
+.drop-zone .ti { font-size: 32px; color: var(--text-muted); display: block; margin-bottom: 8px; }
+.drop-zone .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.drop-zone .dz-sub { font-size: 12px; color: var(--text-muted); }
+
+.preview-table-wrap { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.preview-table-wrap table { font-size: 12px; }
+.preview-table-wrap th { font-size: 10px; position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+.preview-table-wrap td { padding: 7px 10px; }
+
+.match-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.match-row:last-child { border-bottom: none; }
+.match-status { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.match-status.ok { background: var(--green-bg); color: var(--green); }
+.match-status.warn { background: var(--amber-bg); color: var(--amber); }
+.match-status.err { background: var(--red-bg); color: var(--red); }
+
+.wizard-steps { display: flex; gap: 0; margin-bottom: 24px; }
+.wizard-step { flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+.wizard-step.active { color: var(--xero-blue); border-bottom-color: var(--xero-blue); }
+.wizard-step.done { color: var(--green); border-bottom-color: var(--green); }
+
+/* ─── Meeting Prep ───────────────────────────────────────────────────── */
+.prep-brief {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+.prep-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.prep-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.prep-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--xero-blue);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.prep-section-body {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.prep-header {
+  background: linear-gradient(135deg, #111920 0%, #1e2d3d 100%);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 24px 28px;
+  color: white;
+  margin: -28px -28px 24px -28px;
+}
+.prep-account-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.prep-meta { font-size: 12px; color: rgba(255,255,255,.6); display: flex; gap: 16px; flex-wrap: wrap; }
+.prep-meta-item { display: flex; align-items: center; gap: 5px; }
+.call-history-item {
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--xero-blue);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.call-history-date { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+.talking-point {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.talking-point:last-child { border-bottom: none; }
+.talking-point-num {
+  width: 24px; height: 24px;
+  background: var(--xero-blue);
+  color: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.watchout-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.watchout-icon { color: var(--amber); flex-shrink: 0; margin-top: 1px; }
+.commitment-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.commitment-item:last-child { border-bottom: none; }
+.commitment-owner {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  height: fit-content;
+}
+.commitment-owner.ae { background: var(--xero-blue-light); color: var(--xero-blue-dark); }
+.commitment-owner.partner { background: var(--purple-bg); color: var(--purple); }
+
+/* ─── Responsive tweaks ──────────────────────────────────────────────── */
+#hamburgerBtn {
+  display: none;
+  background: none; border: none;
+  font-size: 22px; color: var(--text);
+  padding: 4px 8px; margin-right: 4px;
+  align-items: center;
+}
+#sidebarBackdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99;
+}
+@media (max-width: 900px) {
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .cap-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  #hamburgerBtn { display: flex; }
+  #sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+  }
+  body.sidebar-open #sidebar { transform: translateX(0); }
+  body.sidebar-open #sidebarBackdrop { display: block; }
+  #topbar { padding: 0 14px; }
+  .topbar-period { display: none; }
+  #content { padding: 16px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── API Key Modal ──────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="apiKeyModal">
+  <div class="modal">
+    <div class="modal-logo">
+      <div class="sidebar-logo-icon" style="width:44px;height:44px;font-size:22px;border-radius:10px;">X</div>
+      <div>
+        <div style="font-size:17px;font-weight:700;">Xero Coaching Platform</div>
+        <div style="font-size:12px;color:var(--text-muted);">FY27 Q1 · Xero Australia</div>
+      </div>
+    </div>
+    <div class="modal-title">API Keys</div>
+    <div class="modal-subtitle">
+      Set your keys once — they're stored locally in your browser only.
+    </div>
+    <div style="border-bottom:1px solid var(--border);margin-bottom:16px;padding-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em;">
+        <i class="ti ti-sparkles" style="color:var(--xero-blue);"></i> Anthropic (Claude AI)
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <input type="password" class="form-control" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">
+        Powers call analysis & note summarisation. Get one at <a href="https://console.anthropic.com" target="_blank" style="color:var(--xero-blue);">console.anthropic.com</a>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em;">
+        <i class="ti ti-refresh" style="color:#f59e0b;"></i> Glean (pipeline & Gong sync)
+      </div>
+      <div class="form-row" style="margin-bottom:0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <input type="text" class="form-control" id="gleanUrlInput" placeholder="xero-be.glean.com">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <input type="password" class="form-control" id="gleanTokenInput" placeholder="Glean API token" autocomplete="off">
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">
+        Ask your IT/RevOps team for a Glean API token with Search scope.
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary flex-1" onclick="saveApiKey()">
+        <i class="ti ti-check"></i> Save & Continue
+      </button>
+      <button class="btn btn-ghost" onclick="skipApiKey()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Add Seller Modal ───────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="addSellerModal">
+  <div class="modal">
+    <div class="modal-title mb-8">Add Account Executive</div>
+    <div class="modal-subtitle">Add a new AE to your coaching dashboard.</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control" id="newSellerFirst" placeholder="e.g. Sarah">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="newSellerLast" placeholder="e.g. Chen">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Territory / Segment</label>
+      <input type="text" class="form-control" id="newSellerTerritory" placeholder="e.g. NSW SMB, VIC Mid-Market">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Avatar Colour</label>
+      <div class="color-grid" id="colorGrid">
+        <div class="color-swatch selected" style="background:#1AB4D7;" data-color="#1AB4D7" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#8b5cf6;" data-color="#8b5cf6" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#22c55e;" data-color="#22c55e" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#f59e0b;" data-color="#f59e0b" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#ef4444;" data-color="#ef4444" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#ec4899;" data-color="#ec4899" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#0ea5e9;" data-color="#0ea5e9" onclick="selectColor(this)"></div>
+        <div class="color-swatch" style="background:#14b8a6;" data-color="#14b8a6" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary flex-1" onclick="confirmAddSeller()">
+        <i class="ti ti-user-plus"></i> Add AE
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('addSellerModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Add Opportunity Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="addOppModal">
+  <div class="modal">
+    <div class="modal-title mb-8">Add Pipeline Opportunity</div>
+    <div class="form-group">
+      <label class="form-label">Account Name</label>
+      <input type="text" class="form-control" id="oppAccount" placeholder="e.g. Acme Corp">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Stage</label>
+        <select class="form-control" id="oppStage">
+          <option>Prospecting</option>
+          <option>Discovery</option>
+          <option>Demo / Eval</option>
+          <option>Proposal</option>
+          <option>Negotiation</option>
+          <option>Closed Won</option>
+          <option>Closed Lost</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Value ($ARR)</label>
+        <input type="number" class="form-control" id="oppValue" placeholder="e.g. 12000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Close Date</label>
+      <input type="date" class="form-control" id="oppClose">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary flex-1" onclick="confirmAddOpp()">
+        <i class="ti ti-plus"></i> Add Opportunity
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('addOppModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CSV Import Modal ───────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="csvImportModal">
+  <div class="modal" style="width:580px;max-width:96vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="modal-title" style="margin:0;">Import from CSV</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('csvImportModal')"><i class="ti ti-x"></i></button>
+    </div>
+
+    <!-- Wizard steps -->
+    <div class="wizard-steps" id="wizardSteps">
+      <div class="wizard-step active" id="wstep1">1 · Choose type</div>
+      <div class="wizard-step" id="wstep2">2 · Upload file</div>
+      <div class="wizard-step" id="wstep3">3 · Preview & confirm</div>
+    </div>
+
+    <!-- Step 1: Choose import type -->
+    <div id="csvStep1">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">What are you importing?</div>
+      <div class="import-type-grid">
+        <div class="import-type-card" id="itype-sfpipe" onclick="selectImportType('sfpipe', this)">
+          <i class="ti ti-building-store" style="color:#00a1e0;"></i>
+          <div class="label">Salesforce Pipeline</div>
+          <div class="sublabel">Opportunity data per rep</div>
+        </div>
+        <div class="import-type-card" id="itype-sfact" onclick="selectImportType('sfact', this)">
+          <i class="ti ti-activity" style="color:#00a1e0;"></i>
+          <div class="label">Salesforce Activity</div>
+          <div class="sublabel">Calls, emails, meetings</div>
+        </div>
+        <div class="import-type-card" id="itype-gong" onclick="selectImportType('gong', this)">
+          <i class="ti ti-microphone" style="color:var(--purple);"></i>
+          <div class="label">Gong Calls</div>
+          <div class="sublabel">Call scores & talk ratio</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text-muted);line-height:1.6;" id="importTypeHint">
+        Select an import type above to see instructions for exporting from Salesforce or Gong.
+      </div>
+      <div style="margin-top:16px;text-align:right;">
+        <button class="btn btn-primary" id="csvStep1Next" onclick="csvWizardStep(2)" disabled>Next <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- Step 2: Upload -->
+    <div id="csvStep2" style="display:none;">
+      <div class="drop-zone" id="csvDropZone" onclick="document.getElementById('csvFileInput').click()"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleCsvDrop(event)">
+        <i class="ti ti-file-spreadsheet"></i>
+        <div class="dz-title" id="dzTitle">Drop your CSV here or click to browse</div>
+        <div class="dz-sub" id="dzSub">Exported from Salesforce or Gong as .csv</div>
+      </div>
+      <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none" onchange="handleCsvFile(this)">
+      <div style="background:var(--bg);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text-muted);line-height:1.6;" id="csvFormatHint"></div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between;">
+        <button class="btn btn-ghost" onclick="csvWizardStep(1)"><i class="ti ti-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" id="csvStep2Next" onclick="csvWizardStep(3)" disabled>Preview <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- Step 3: Preview -->
+    <div id="csvStep3" style="display:none;">
+      <div id="csvPreviewContent"></div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between;gap:10px;">
+        <button class="btn btn-ghost" onclick="csvWizardStep(2)"><i class="ti ti-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" id="csvConfirmBtn" onclick="confirmCsvImport()">
+          <i class="ti ti-check"></i> <span id="csvConfirmLabel">Import Data</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Glean Sync Modal ───────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="gleanSyncModal">
+  <div class="modal" style="width:520px;max-width:96vw;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:40px;height:40px;background:#f59e0b22;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#f59e0b;">
+        <i class="ti ti-refresh"></i>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;">Sync from Glean</div>
+        <div style="font-size:12px;color:var(--text-muted);">Pulls pipeline & Gong data from your Glean instance</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="closeModal('gleanSyncModal')"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div id="gleanSyncSetup">
+      <div class="form-group">
+        <label class="form-label">Glean Instance URL</label>
+        <input type="text" class="form-control" id="gleanInstanceUrl" placeholder="e.g. xero-be.glean.com" value="">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Your Glean subdomain — ask your IT team if unsure. Usually company-be.glean.com</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Glean API Token</label>
+        <input type="password" class="form-control" id="gleanApiToken" placeholder="Paste your Glean API token" autocomplete="off">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Generate at: Glean Admin → Integrations → API Tokens. Needs Search scope.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sync for</label>
+        <select class="form-control" id="gleanSyncTarget">
+          <option value="all">All AEs on the team</option>
+          <option value="single">One specific AE</option>
+        </select>
+      </div>
+      <div class="form-group" id="gleanSyncSellerGroup" style="display:none;">
+        <label class="form-label">Select AE</label>
+        <select class="form-control" id="gleanSyncSeller"></select>
+      </div>
+      <div style="background:var(--xero-blue-light);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--xero-blue-dark);margin-bottom:16px;">
+        <strong>What gets synced:</strong> Pipeline opportunities (from deal desk sheets & Salesforce records indexed in Glean) and Gong call records (titles, dates, talk ratio where available). Coaching notes and capability ratings are never overwritten.<br><br><strong>Heads up:</strong> some browsers block direct Glean API calls from a hosted page (CORS). If the sync fails, use <strong>Import CSV</strong> instead — it covers the same data.
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary flex-1" onclick="runGleanSync()">
+          <i class="ti ti-refresh"></i> Start Sync
+        </button>
+        <button class="btn btn-ghost" onclick="closeModal('gleanSyncModal')">Cancel</button>
+      </div>
+    </div>
+
+    <div id="gleanSyncProgress" style="display:none;">
+      <div id="gleanSyncLog" style="background:var(--bg);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;max-height:300px;overflow-y:auto;font-family:monospace;"></div>
+      <div style="margin-top:16px;text-align:right;">
+        <button class="btn btn-ghost" id="gleanSyncDoneBtn" onclick="closeModal('gleanSyncModal');renderSidebar();renderDashboard();" style="display:none;">
+          <i class="ti ti-check"></i> Done
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── App Layout ─────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">X</div>
+      <div>
+        <div class="sidebar-logo-text">Coaching Hub</div>
+        <div class="sidebar-logo-sub">Xero Australia</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <div class="nav-item active" onclick="showView('dashboard', this)" id="nav-dashboard">
+        <i class="ti ti-layout-dashboard"></i>
+        Team Dashboard
+      </div>
+      <div class="nav-item" onclick="showView('meetingprep', this)" id="nav-meetingprep">
+        <i class="ti ti-clipboard-text"></i>
+        Meeting Prep
+        <span class="nav-item-badge">AI</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Account Executives</div>
+      <div class="sidebar-sellers" id="sellerNav"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Playbooks &amp; Training</div>
+      <a class="nav-item" href="https://xero-change-management.vercel.app/" target="_blank" rel="noopener">
+        <i class="ti ti-compass"></i> Change Mgmt Hub
+        <i class="ti ti-external-link" style="margin-left:auto;font-size:13px;opacity:.6;"></i>
+      </a>
+      <a class="nav-item" href="https://xero-change-management.vercel.app/training/objection-handling" target="_blank" rel="noopener">
+        <i class="ti ti-message-2"></i> Objection Handling
+      </a>
+      <a class="nav-item" href="https://xero-change-management.vercel.app/templates/mutual-action-plan" target="_blank" rel="noopener">
+        <i class="ti ti-file-check"></i> Mutual Action Plan
+      </a>
+      <a class="nav-item" href="https://xero-change-management.vercel.app/playbooks/maturity-stages" target="_blank" rel="noopener">
+        <i class="ti ti-stairs-up"></i> Maturity Stages
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-footer-btn" onclick="openModal('addSellerModal')">
+        <i class="ti ti-user-plus"></i> Add AE
+      </button>
+      <button class="sidebar-footer-btn" onclick="exportAll()">
+        <i class="ti ti-download"></i> Export All
+      </button>
+      <button class="sidebar-footer-btn" onclick="triggerImport()">
+        <i class="ti ti-upload"></i> Import JSON
+      </button>
+      <button class="sidebar-footer-btn" onclick="openCsvImport()">
+        <i class="ti ti-table-import"></i> Import CSV
+      </button>
+      <button class="sidebar-footer-btn" onclick="openModal('apiKeyModal')">
+        <i class="ti ti-key"></i> API Keys
+      </button>
+      <button class="sidebar-footer-btn" onclick="openGleanSync(null)" style="color:#f59e0b;">
+        <i class="ti ti-refresh"></i> Sync from Glean
+      </button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </aside>
+
+  <div id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <button id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu"><i class="ti ti-menu-2"></i></button>
+      <div class="topbar-title" id="topbarTitle">Team Dashboard</div>
+      <div class="topbar-period">FY27 Q1 · Xero Australia · AEs</div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div id="content">
+
+      <!-- ── DASHBOARD VIEW ──────────────────────────────────────────── -->
+      <div class="view active" id="view-dashboard">
+        <div class="metric-grid" id="dashMetrics"></div>
+        <div class="grid-2">
+          <div>
+            <div class="section-header">
+              <div>
+                <div class="section-title">Account Executives</div>
+                <div class="section-subtitle">Click a seller to open their profile</div>
+              </div>
+            </div>
+            <div class="seller-grid" id="dashSellerGrid"></div>
+          </div>
+          <div>
+            <div class="section-header">
+              <div class="section-title">Recent Coaching Activity</div>
+            </div>
+            <div class="card">
+              <div id="activityFeed"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MEETING PREP VIEW ──────────────────────────────────────────── -->
+      <div class="view" id="view-meetingprep">
+        <div class="grid-2" style="align-items:start;">
+
+          <!-- Left: Input form -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Generate Meeting Prep Brief</div>
+                  <div class="card-subtitle">Searches Glean for all previous Gong calls with the firm, then builds a brief with Claude</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Account / Firm Name</label>
+                <input type="text" class="form-control" id="prepAccount" placeholder="e.g. Johnsons MME, N.S Accounting" oninput="prepAccountSuggest(this.value)">
+                <div id="prepAccountSuggestions" style="display:none;background:white;border:1px solid var(--border);border-radius:7px;margin-top:4px;box-shadow:var(--shadow-md);z-index:10;position:relative;"></div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">AE / Account Manager</label>
+                  <select class="form-control" id="prepSeller">
+                    <option value="">Any team member</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Meeting Date</label>
+                  <input type="date" class="form-control" id="prepDate">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Meeting Goal / Context <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+                <textarea class="form-control" id="prepContext" rows="3" placeholder="e.g. Follow-up on proposal sent last week. Want to discuss pricing concerns and get a commitment on timeline. Key contact is Sarah (CFO)."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">How many previous calls to review</label>
+                <select class="form-control" id="prepCallDepth">
+                  <option value="3">Last 3 calls</option>
+                  <option value="5" selected>Last 5 calls</option>
+                  <option value="10">Last 10 calls</option>
+                  <option value="20">All available calls</option>
+                </select>
+              </div>
+
+              <div id="prepGleanWarning" style="display:none;background:var(--amber-bg);border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e;margin-bottom:16px;">
+                <strong>⚠ Glean not connected.</strong> Enter your Glean API token in API Keys to enable call history search. You can still generate a prep brief from manual context below.
+              </div>
+
+              <div id="prepLoading" style="display:none;">
+                <div class="ai-loading mb-16"><div class="spinner"></div> <span id="prepLoadingMsg">Searching Glean for previous calls…</span></div>
+              </div>
+
+              <button class="btn btn-primary" style="width:100%;" onclick="generateMeetingPrep()">
+                <i class="ti ti-sparkles"></i> Generate Meeting Prep Brief
+              </button>
+
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                <div class="form-label">Recent prep briefs</div>
+                <div id="prepHistory" style="font-size:12px;color:var(--text-muted);">None yet this session.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Output -->
+          <div id="prepOutput">
+            <div style="text-align:center;padding:60px 24px;color:var(--text-muted);">
+              <i class="ti ti-clipboard-text" style="font-size:48px;display:block;margin-bottom:16px;opacity:.3;"></i>
+              <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">Your prep brief will appear here</div>
+              <div style="font-size:13px;">Enter a firm name and click Generate</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SELLER PROFILE VIEW ─────────────────────────────────────── -->
+      <div class="view" id="view-seller">
+        <div class="profile-header" id="profileHeader"></div>
+        <div class="tab-bar" id="profileTabs"></div>
+        <div id="profileTabPanels"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   DATA LAYER
+═══════════════════════════════════════════════════════════════════════ */
+const STORAGE_KEY = 'xero_coaching_v2';
+const AVATARS_COLORS = ['#1AB4D7','#8b5cf6','#22c55e','#f59e0b','#ef4444','#ec4899','#0ea5e9','#14b8a6'];
+
+let state = {
+  apiKey: '',
+  sellers: [],
+  currentSellerId: null,
+  selectedColor: '#1AB4D7',
+  editingNoteId: null,
+  currentOppSellerId: null
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+    }
+  } catch(e) {}
+  if (!state.sellers || !state.sellers.length) seedData();
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    apiKey: state.apiKey,
+    sellers: state.sellers
+  }));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SEED DATA — 5 sample AEs
+═══════════════════════════════════════════════════════════════════════ */
+function seedData() {
+  const now = Date.now();
+  const d = n => new Date(now - 86400000 * n).toISOString().split('T')[0];
+  state.sellers = [
+    makeSeller('Alex', 'Tran', 'VIC Partner Sales', '#1AB4D7', {
+      quota: 82, gong: 74, calls: 58, emails: 150, meetings: 22, opps: 15, demos: 12,
+      capabilities: { 'Customer Focused':4,'Ensures Accountability':3,'Action Oriented':4,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+      pipeline: [
+        { account:'Brightline Accounting', stage:'Proposal', value:3400, close:d(-20) },
+        { account:'Harbourview Partners', stage:'Demo / Eval', value:2200, close:d(-35) },
+        { account:'Cedar & Birch Advisory', stage:'Closed Won', value:1800, close:d(12) },
+        { account:'Northgate Tax Co', stage:'Discovery', value:2600, close:d(-50) }
+      ],
+      gongCalls: [
+        { id:'gc_at1', date:d(3), focus:'Imported', score:76, talkRatio:49, title:'Brightline Accounting — proposal walkthrough', moments:[], recommendation:'', ts: now - 86400000*3 },
+        { id:'gc_at2', date:d(9), focus:'Imported', score:71, talkRatio:55, title:'Harbourview Partners — practice management demo', moments:[], recommendation:'', ts: now - 86400000*9 }
+      ],
+      notes: [
+        { id:'n_at1', date:d(8), type:'1:1 Coaching', body:'Alex is tracking well this quarter. Cedar & Birch closed cleanly on value — no concessions. Brightline proposal is out; partner is engaged but wants a phased migration plan before signing.\n\nStrengths: discovery quality, partner rapport, structured proposals.\nDevelopment: tightening next steps at end of demos, multi-threading larger firms.', ts: now - 86400000*8 }
+      ],
+      grow: {
+        goal: 'Close Brightline and Harbourview this quarter and finish above 90% attainment',
+        reality: 'At 82% with two late-stage deals. Both partners engaged but need migration confidence to commit.',
+        options: '1. Build a phased rollout plan for Brightline\n2. Run a working session with Harbourview ops lead\n3. Use the change readiness scorecard in discovery',
+        will: 'Send Brightline the phased plan this week. Book Harbourview working session by Friday.',
+        capFocus: 'Plans & Aligns', gongSkill: 'Next Steps',
+        strengths: 'Discovery quality, partner rapport, proposal structure',
+        development: 'Next-steps discipline, multi-threading',
+        accountability: 'Weekly pipeline review. Brightline plan sent by end of week.'
+      }
+    }),
+    makeSeller('Morgan', 'Reid', 'VIC Partner Sales', '#8b5cf6', {
+      quota: 95, gong: 81, calls: 66, emails: 175, meetings: 27, opps: 19, demos: 16,
+      capabilities: { 'Customer Focused':4,'Ensures Accountability':4,'Action Oriented':4,'Plans & Aligns':4,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+      pipeline: [
+        { account:'Summit Ridge Partners', stage:'Negotiation', value:4200, close:d(-15) },
+        { account:'Clearwater Advisory', stage:'Proposal', value:2800, close:d(-25) },
+        { account:'Old Mill Accountants', stage:'Closed Won', value:2100, close:d(30) },
+        { account:'Beacon Bay Tax', stage:'Discovery', value:1900, close:d(-55) }
+      ],
+      gongCalls: [
+        { id:'gc_mr1', date:d(2), focus:'Imported', score:83, talkRatio:46, title:'Summit Ridge — commercial terms discussion', moments:[], recommendation:'', ts: now - 86400000*2 },
+        { id:'gc_mr2', date:d(6), focus:'Imported', score:79, talkRatio:51, title:'Clearwater Advisory — partner alignment call', moments:[], recommendation:'', ts: now - 86400000*6 }
+      ],
+      notes: [
+        { id:'n_mr1', date:d(12), type:'1:1 Coaching', body:'Morgan is the team pacesetter this quarter. Old Mill closed ahead of schedule. Summit Ridge is in negotiation — holding firm on 12-month terms and the partner respects the structure.\n\nStrengths: commercial confidence, deal control, pipeline discipline.\nDevelopment: delegating smaller deals, coaching peers on negotiation technique.', ts: now - 86400000*12 }
+      ],
+      grow: {
+        goal: 'Land Summit Ridge at full value and finish the quarter above 110%',
+        reality: 'At 95% with strong late-stage coverage. Negotiation is the watch point — partner pushing on price.',
+        options: '1. Anchor on phased delivery value, not discount\n2. Bring in a customer reference firm\n3. Walk through the mutual action plan with the partner',
+        will: 'Reference call booked this week. MAP shared before next negotiation session.',
+        capFocus: 'Ensures Accountability', gongSkill: 'Pricing',
+        strengths: 'Commercial confidence, deal control, pipeline discipline',
+        development: 'Peer coaching, delegation',
+        accountability: 'Negotiation debrief after each Summit Ridge call.'
+      }
+    }),
+    makeSeller('Priya', 'Sharma', 'VIC/TAS Partner Sales', '#22c55e', {
+      quota: 71, gong: 69, calls: 51, emails: 138, meetings: 19, opps: 13, demos: 10,
+      capabilities: { 'Customer Focused':4,'Ensures Accountability':3,'Action Oriented':3,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':3,'Domain Expertise':3 },
+      pipeline: [
+        { account:'Gumtree Accounting', stage:'Demo / Eval', value:2400, close:d(-22) },
+        { account:'Coastal Edge Advisory', stage:'Discovery', value:1700, close:d(-48) },
+        { account:'Stonebridge Partners', stage:'Proposal', value:2900, close:d(-18) }
+      ],
+      gongCalls: [
+        { id:'gc_ps1', date:d(4), focus:'Imported', score:70, talkRatio:58, title:'Gumtree Accounting — workflow demo', moments:[], recommendation:'', ts: now - 86400000*4 }
+      ],
+      notes: [
+        { id:'n_ps1', date:d(10), type:'1:1 Coaching', body:'Priya covers a wide patch and her forecasting is reliable. Stonebridge proposal is solid but the demo-to-proposal conversion window is stretching — partners go quiet after demos.\n\nStrengths: territory coverage, reliable forecasting, customer empathy.\nDevelopment: locking next steps before ending demos, creating urgency in late stage.', ts: now - 86400000*10 }
+      ],
+      grow: {
+        goal: 'Convert Stonebridge and Gumtree by quarter end and lift attainment above 85%',
+        reality: 'At 71% with mid-stage pipeline. Demos go well but commitment stalls afterwards.',
+        options: '1. Trial-close technique on next two demos\n2. End every demo with a booked next meeting\n3. Use before/after workflow diagrams to build urgency',
+        will: 'Next two demos end with a scheduled follow-up on the spot.',
+        capFocus: 'Consultative Selling', gongSkill: 'Next Steps',
+        strengths: 'Territory coverage, forecasting, empathy',
+        development: 'Closing confidence, urgency in late-stage deals',
+        accountability: 'Post-demo debrief with manager for the next month.'
+      }
+    }),
+    makeSeller('Jack', 'Holloway', 'VIC Partner Sales', '#f59e0b', {
+      quota: 64, gong: 66, calls: 47, emails: 120, meetings: 17, opps: 11, demos: 8,
+      capabilities: { 'Customer Focused':3,'Ensures Accountability':3,'Action Oriented':3,'Plans & Aligns':2,'Sells Like a Xero':3,'Consultative Selling':3,'Domain Expertise':2 },
+      pipeline: [
+        { account:'Riverbend Bookkeeping', stage:'Discovery', value:1400, close:d(-40) },
+        { account:'Fern + Field Advisory', stage:'Demo / Eval', value:1900, close:d(-30) },
+        { account:'Lakeside Tax Group', stage:'Prospecting', value:1100, close:d(-65) }
+      ],
+      gongCalls: [
+        { id:'gc_jh1', date:d(5), focus:'Imported', score:64, talkRatio:63, title:'Fern + Field — discovery call', moments:[], recommendation:'', ts: now - 86400000*5 }
+      ],
+      notes: [
+        { id:'n_jh1', date:d(14), type:'1:1 Coaching', body:'Jack is in his first full year and building good habits. Talk ratio on recent calls is running high — talking past the close and over-explaining features.\n\nStrengths: product enthusiasm, work ethic, coachability.\nDevelopment: listening ratio, question-led discovery, structured call planning.', ts: now - 86400000*14 }
+      ],
+      grow: {
+        goal: 'Build a consistent discovery rhythm and bring talk ratio under 55%',
+        reality: 'At 64% with an early-stage pipeline. Calls are energetic but rep-dominated.',
+        options: '1. Pre-write three open questions per call\n2. Review one call recording per week together\n3. Shadow a senior AE on two discovery calls',
+        will: 'Call plan template used on every discovery call this month.',
+        capFocus: 'Plans & Aligns', gongSkill: 'Discovery',
+        strengths: 'Enthusiasm, work ethic, coachability',
+        development: 'Listening ratio, question-led discovery',
+        accountability: 'Weekly call review in 1:1.'
+      }
+    }),
+    makeSeller('Sofia', 'Marino', 'TAS Partner Sales', '#ec4899', {
+      quota: 88, gong: 77, calls: 60, emails: 162, meetings: 24, opps: 16, demos: 14,
+      capabilities: { 'Customer Focused':4,'Ensures Accountability':4,'Action Oriented':4,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+      pipeline: [
+        { account:'Huon Valley Accountants', stage:'Negotiation', value:3100, close:d(-12) },
+        { account:'Derwent & Co', stage:'Closed Won', value:2500, close:d(25) },
+        { account:'Bass Strait Advisory', stage:'Demo / Eval', value:2000, close:d(-38) }
+      ],
+      gongCalls: [
+        { id:'gc_sm1', date:d(1), focus:'Imported', score:78, talkRatio:50, title:'Huon Valley — migration sequencing call', moments:[], recommendation:'', ts: now - 86400000*1 },
+        { id:'gc_sm2', date:d(7), focus:'Imported', score:75, talkRatio:53, title:'Bass Strait Advisory — ecosystem walkthrough', moments:[], recommendation:'', ts: now - 86400000*7 }
+      ],
+      notes: [
+        { id:'n_sm1', date:d(6), type:'1:1 Coaching', body:'Sofia owns the TAS patch end-to-end. Derwent & Co closed on a clean phased rollout story. Huon Valley negotiation is about staff change fear, not price — she is handling it well with the resistance playbook.\n\nStrengths: change management framing, trust building, regional relationships.\nDevelopment: pipeline depth beyond the top three accounts.', ts: now - 86400000*6 }
+      ],
+      grow: {
+        goal: 'Close Huon Valley and add four new qualified opportunities this quarter',
+        reality: 'At 88% with thin early-stage pipeline behind the current deals.',
+        options: '1. Run a regional partner event in Hobart\n2. Re-engage dormant accounts from last quarter\n3. Block two prospecting mornings per week',
+        will: 'Prospecting blocks in calendar from Monday. Event proposal drafted this week.',
+        capFocus: 'Action Oriented', gongSkill: 'Discovery',
+        strengths: 'Change framing, trust building, regional network',
+        development: 'Pipeline depth, prospecting consistency',
+        accountability: 'Four new qualified opps by end of month.'
+      }
+    }),
+    makeSeller('Liam', 'Carter', 'VIC Partner Sales', '#0ea5e9', {
+      quota: 55, gong: 62, calls: 38, emails: 96, meetings: 13, opps: 8, demos: 6,
+      capabilities: { 'Customer Focused':3,'Ensures Accountability':2,'Action Oriented':3,'Plans & Aligns':2,'Sells Like a Xero':3,'Consultative Selling':2,'Domain Expertise':2 },
+      pipeline: [
+        { account:'Wattle Grove Bookkeeping', stage:'Discovery', value:900, close:d(-45) },
+        { account:'Eastbrook Partners', stage:'Prospecting', value:1300, close:d(-70) }
+      ],
+      gongCalls: [],
+      notes: [
+        { id:'n_lc1', date:d(18), type:'1:1 Coaching', body:'Liam joined the team mid-quarter and is ramping on a starter patch. Activity is building week over week and he is picking up the playbook quickly.\n\nStrengths: product knowledge, customer empathy, steady under pressure.\nDevelopment: activity consistency, pipeline reactivation, CRM hygiene after the break.', ts: now - 86400000*18 }
+      ],
+      grow: {
+        goal: 'Be fully ramped with five active opportunities by end of quarter',
+        reality: 'At 55% on a new-starter ramp plan. Two active opps; the rest of the patch is untouched whitespace.',
+        options: '1. Build a target list of 20 firms in the patch\n2. Book intro calls with the top five\n3. Shadow two calls with a senior AE',
+        will: 'CRM clean-up done this week. Five reactivation calls booked.',
+        capFocus: 'Action Oriented', gongSkill: 'Discovery',
+        strengths: 'Product knowledge, empathy, composure',
+        development: 'New-starter ramp, prospecting rhythm',
+        accountability: 'Weekly ramp check-in with manager.'
+      }
+    })
+  ];
+  saveState();
+}
+
+function makeSeller(first, last, territory, color, data) {
+  return {
+    id: 'seller_' + Math.random().toString(36).substr(2,9),
+    first, last, territory, color,
+    quota: data.quota || 0,
+    gong: data.gong || 0,
+    calls: data.calls || 0,
+    emails: data.emails || 0,
+    meetings: data.meetings || 0,
+    opps: data.opps || 0,
+    demos: data.demos || 0,
+    capabilities: data.capabilities || {},
+    pipeline: data.pipeline || [],
+    notes: data.notes || [],
+    gongCalls: data.gongCalls || [],
+    grow: data.grow || {}
+  };
+}
+
+function getSeller(id) { return state.sellers.find(s => s.id === id); }
+function sellerInitials(s) { return (s.first[0] + s.last[0]).toUpperCase(); }
+function sellerFullName(s) { return s.first + ' ' + s.last; }
+function capAvg(s) {
+  const vals = Object.values(s.capabilities || {});
+  if (!vals.length) return 0;
+  return (vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
+}
+function quotaColor(q) {
+  if (q >= 90) return 'green';
+  if (q >= 70) return 'blue';
+  if (q >= 50) return 'amber';
+  return 'red';
+}
+function quotaBadge(q) {
+  if (q >= 90) return 'badge-green';
+  if (q >= 70) return 'badge-blue';
+  if (q >= 50) return 'badge-amber';
+  return 'badge-red';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════════════ */
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-open');
+}
+function closeSidebarMobile() {
+  document.body.classList.remove('sidebar-open');
+}
+
+function showView(view, navEl) {
+  closeSidebarMobile();
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .seller-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+
+  if (view === 'dashboard') {
+    document.getElementById('topbarTitle').textContent = 'Team Dashboard';
+    renderDashboard();
+    setTopbarActions([]);
+  }
+
+  if (view === 'meetingprep') {
+    document.getElementById('topbarTitle').textContent = 'Meeting Prep Generator';
+    setTopbarActions([]);
+    renderMeetingPrepView();
+  }
+}
+
+function showSeller(id) {
+  closeSidebarMobile();
+  state.currentSellerId = id;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .seller-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-seller').classList.add('active');
+  const navEl = document.querySelector(`[data-seller-id="${id}"]`);
+  if (navEl) navEl.classList.add('active');
+  renderSellerProfile(id);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR RENDER
+═══════════════════════════════════════════════════════════════════════ */
+function renderSidebar() {
+  const nav = document.getElementById('sellerNav');
+  nav.innerHTML = state.sellers.map(s => `
+    <div class="seller-nav-item" data-seller-id="${s.id}" onclick="showSeller('${s.id}')">
+      <div class="seller-avatar-sm" style="background:${s.color}22;color:${s.color};">${sellerInitials(s)}</div>
+      <span class="seller-nav-name">${sellerFullName(s)}</span>
+      <span class="seller-nav-score">${s.quota}%</span>
+    </div>
+  `).join('');
+}
+
+function setTopbarActions(actions) {
+  const el = document.getElementById('topbarActions');
+  el.innerHTML = actions.map(a => `<button class="btn ${a.class}" onclick="${a.action}">${a.icon ? `<i class="ti ${a.icon}"></i>` : ''}${a.label}</button>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const sellers = state.sellers;
+  const avgQuota = sellers.length ? (sellers.reduce((a,s) => a + s.quota, 0) / sellers.length).toFixed(0) : 0;
+  const avgGong = sellers.length ? (sellers.reduce((a,s) => a + s.gong, 0) / sellers.length).toFixed(0) : 0;
+  const totalNotes = sellers.reduce((a,s) => a + (s.notes||[]).length, 0);
+  const totalCalls = sellers.reduce((a,s) => a + (s.gongCalls||[]).length, 0);
+
+  document.getElementById('dashMetrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-icon blue"><i class="ti ti-users"></i></div>
+      <div>
+        <div class="metric-value">${sellers.length}</div>
+        <div class="metric-label">Active Sellers</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon green"><i class="ti ti-target"></i></div>
+      <div>
+        <div class="metric-value">${avgQuota}%</div>
+        <div class="metric-label">Avg Quota Attainment</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon amber"><i class="ti ti-notebook"></i></div>
+      <div>
+        <div class="metric-value">${totalNotes}</div>
+        <div class="metric-label">Total Coaching Notes</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon purple"><i class="ti ti-microphone"></i></div>
+      <div>
+        <div class="metric-value">${totalCalls}</div>
+        <div class="metric-label">Calls Analysed</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('dashSellerGrid').innerHTML = sellers.map(s => {
+    const avg = capAvg(s);
+    const color = quotaColor(s.quota);
+    return `
+    <div class="seller-card" onclick="showSeller('${s.id}')">
+      <div class="seller-card-header">
+        <div class="seller-avatar" style="background:${s.color}22;color:${s.color};">${sellerInitials(s)}</div>
+        <div>
+          <div class="seller-name">${sellerFullName(s)}</div>
+          <div class="seller-role">${s.territory}</div>
+        </div>
+        <div class="badge ${quotaBadge(s.quota)}" style="margin-left:auto;">${s.quota}%</div>
+      </div>
+      <div class="seller-stats">
+        <div class="seller-stat">
+          <div class="seller-stat-value" style="color:var(--xero-blue)">${s.gong}</div>
+          <div class="seller-stat-label">Gong Score</div>
+        </div>
+        <div class="seller-stat">
+          <div class="seller-stat-value">${avg}</div>
+          <div class="seller-stat-label">Cap. Avg</div>
+        </div>
+        <div class="seller-stat">
+          <div class="seller-stat-value">${(s.notes||[]).length}</div>
+          <div class="seller-stat-label">Notes</div>
+        </div>
+      </div>
+      <div class="seller-progress">
+        <div class="progress-label"><span>Quota attainment</span><span>${s.quota}%</span></div>
+        <div class="progress-bar"><div class="progress-fill ${color}" style="width:${Math.min(s.quota,100)}%"></div></div>
+      </div>
+    </div>
+    `;
+  }).join('');
+
+  renderActivityFeed();
+}
+
+function renderActivityFeed() {
+  const allActivities = [];
+  state.sellers.forEach(s => {
+    (s.notes||[]).forEach(n => {
+      allActivities.push({
+        type: 'note', seller: s, note: n,
+        ts: n.ts || new Date(n.date).getTime()
+      });
+    });
+    (s.gongCalls||[]).forEach(c => {
+      allActivities.push({
+        type: 'gong', seller: s, call: c,
+        ts: c.ts || 0
+      });
+    });
+  });
+  allActivities.sort((a,b) => b.ts - a.ts);
+  const recent = allActivities.slice(0, 8);
+
+  const feed = document.getElementById('activityFeed');
+  if (!recent.length) {
+    feed.innerHTML = `<div class="empty-state" style="padding:32px 0;"><i class="ti ti-activity" style="font-size:32px;margin-bottom:8px;display:block;"></i><p>No coaching activity yet</p></div>`;
+    return;
+  }
+  feed.innerHTML = recent.map(a => {
+    if (a.type === 'note') {
+      return `
+        <div class="activity-item" style="cursor:pointer;" onclick="showSeller('${a.seller.id}')">
+          <div class="activity-dot" style="background:${a.seller.color}22;color:${a.seller.color};">
+            <i class="ti ti-notebook"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title"><strong>${sellerFullName(a.seller)}</strong> — ${a.note.type}</div>
+            <div class="activity-meta">${a.note.date} · ${escHtml(a.note.body.split('\n')[0].slice(0,80))}${a.note.body.length > 80 ? '…' : ''}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="activity-item" style="cursor:pointer;" onclick="showSeller('${a.seller.id}')">
+          <div class="activity-dot" style="background:var(--purple-bg);color:var(--purple);">
+            <i class="ti ti-microphone"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title"><strong>${sellerFullName(a.seller)}</strong> — Gong Call Analysed</div>
+            <div class="activity-meta">${a.call.date} · Score: ${a.call.score}/100 · Focus: ${a.call.focus}</div>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SELLER PROFILE
+═══════════════════════════════════════════════════════════════════════ */
+function renderSellerProfile(id) {
+  const s = getSeller(id);
+  if (!s) return;
+
+  document.getElementById('topbarTitle').textContent = sellerFullName(s);
+  setTopbarActions([
+    { label: 'Export Notes', icon: 'ti-download', class: 'btn btn-ghost btn-sm', action: `exportNotes('${id}')` }
+  ]);
+
+  // Profile Header
+  const avg = capAvg(s);
+  document.getElementById('profileHeader').innerHTML = `
+    <div class="profile-avatar" style="background:${s.color}22;color:${s.color};">${sellerInitials(s)}</div>
+    <div class="profile-info">
+      <div class="profile-name">${sellerFullName(s)}</div>
+      <div class="profile-role">Account Executive · ${s.territory}</div>
+      <div class="profile-tags">
+        <span class="badge ${quotaBadge(s.quota)}"><i class="ti ti-target"></i> ${s.quota}% quota</span>
+        <span class="badge badge-blue"><i class="ti ti-microphone"></i> ${s.gong} Gong score</span>
+        <span class="badge badge-gray"><i class="ti ti-chart-bar"></i> ${avg} cap. avg</span>
+        <span class="badge badge-purple"><i class="ti ti-notebook"></i> ${(s.notes||[]).length} notes</span>
+      </div>
+    </div>
+    <div class="profile-stats" style="gap:28px;">
+      <div class="profile-stat">
+        <div class="profile-stat-value" style="color:var(--xero-blue)">${s.quota}%</div>
+        <div class="profile-stat-label">Quota</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" style="color:var(--purple)">${s.gong}</div>
+        <div class="profile-stat-label">Gong</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value">${avg}</div>
+        <div class="profile-stat-label">Cap. Avg</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value">${(s.notes||[]).length}</div>
+        <div class="profile-stat-label">Notes</div>
+      </div>
+    </div>
+  `;
+
+  // Tabs
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: 'ti-layout-dashboard' },
+    { id: 'gong', label: 'Gong Calls', icon: 'ti-microphone' },
+    { id: 'salesforce', label: 'Salesforce', icon: 'ti-chart-dots' },
+    { id: 'capabilities', label: 'Capabilities', icon: 'ti-award' },
+    { id: 'coaching', label: 'Coaching Plan', icon: 'ti-target' },
+    { id: 'notes', label: 'Coaching Notes', icon: 'ti-notebook' }
+  ];
+
+  document.getElementById('profileTabs').innerHTML = tabs.map((t,i) => `
+    <button class="tab-btn ${i===0?'active':''}" onclick="switchTab('${t.id}', this)">
+      <i class="ti ${t.icon}"></i> ${t.label}
+    </button>
+  `).join('');
+
+  document.getElementById('profileTabPanels').innerHTML = tabs.map((t,i) => `
+    <div class="tab-panel ${i===0?'active':''}" id="tabpanel-${t.id}" data-seller="${id}"></div>
+  `).join('');
+
+  renderTab('overview', id);
+}
+
+function switchTab(tabId, btn) {
+  const id = state.currentSellerId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById('tabpanel-' + tabId);
+  panel.classList.add('active');
+  renderTab(tabId, id);
+}
+
+function renderTab(tabId, id) {
+  const s = getSeller(id);
+  const panel = document.getElementById('tabpanel-' + tabId);
+  if (!s || !panel) return;
+  switch(tabId) {
+    case 'overview': panel.innerHTML = buildOverviewTab(s); break;
+    case 'gong': panel.innerHTML = buildGongTab(s); break;
+    case 'salesforce': panel.innerHTML = buildSalesforceTab(s); break;
+    case 'capabilities': panel.innerHTML = buildCapabilitiesTab(s); break;
+    case 'coaching': panel.innerHTML = buildCoachingPlanTab(s); break;
+    case 'notes': panel.innerHTML = buildNotesTab(s); break;
+  }
+}
+
+/* ─── OVERVIEW TAB ─────────────────────────────────────────────────── */
+function buildOverviewTab(s) {
+  const caps = s.capabilities || {};
+  const capKeys = Object.keys(caps);
+  const skillBars = capKeys.length ? capKeys.map(k => {
+    const v = caps[k];
+    const pct = (v / 4) * 100;
+    return `
+      <div class="skill-bar-row">
+        <div class="skill-bar-label">${k}</div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${pct}%;background:${v>=3?'var(--xero-blue)':v>=2?'var(--amber)':'var(--red)'}"></div></div>
+        <div class="skill-bar-score">${v}/4</div>
+      </div>
+    `;
+  }).join('') : '<p class="text-muted text-sm">No capability ratings yet. Set them in the Capabilities tab.</p>';
+
+  const recentNotes = (s.notes||[]).slice(-2).reverse().map(n => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div class="flex items-center gap-8 mb-4">
+        <span class="badge badge-gray">${n.type}</span>
+        <span class="text-xs text-muted">${n.date}</span>
+      </div>
+      <div class="text-sm" style="line-height:1.5;">${escHtml(n.body.split('\n')[0].slice(0,140))}${n.body.length > 140 ? '…' : ''}</div>
+    </div>
+  `).join('') || '<p class="text-muted text-sm">No coaching notes yet.</p>';
+
+  const recentGong = (s.gongCalls||[]).slice(-1)[0];
+  const gongSnippet = recentGong ? `
+    <div class="moment-card coaching">
+      <div class="moment-label">Latest call · ${recentGong.date} · ${recentGong.focus}</div>
+      Score: ${recentGong.score}/100 · Talk ratio: ${recentGong.talkRatio || '–'}%<br>
+      <span class="text-muted text-sm">${(recentGong.moments||[])[0]?.text?.slice(0,120) || 'No moments captured'}${((recentGong.moments||[])[0]?.text||'').length > 120 ? '…' : ''}</span>
+    </div>
+  ` : '<p class="text-muted text-sm">No Gong calls analysed yet.</p>';
+
+  return `
+    <div class="grid-2">
+      <div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <div class="card-title">Activity Overview · Q1</div>
+          </div>
+          <div class="grid-3" style="text-align:center;">
+            <div><div style="font-size:22px;font-weight:700;color:var(--xero-blue)">${s.calls}</div><div class="text-xs text-muted mt-8">Calls</div></div>
+            <div><div style="font-size:22px;font-weight:700;color:var(--xero-blue)">${s.emails}</div><div class="text-xs text-muted mt-8">Emails</div></div>
+            <div><div style="font-size:22px;font-weight:700;color:var(--xero-blue)">${s.meetings}</div><div class="text-xs text-muted mt-8">Meetings</div></div>
+            <div><div style="font-size:22px;font-weight:700;color:var(--purple)">${s.opps}</div><div class="text-xs text-muted mt-8">Opps Created</div></div>
+            <div><div style="font-size:22px;font-weight:700;color:var(--purple)">${s.demos}</div><div class="text-xs text-muted mt-8">Demos</div></div>
+            <div><div style="font-size:22px;font-weight:700;${s.quota>=75?'color:var(--green)':s.quota>=50?'color:var(--amber)':'color:var(--red)'}">${s.quota}%</div><div class="text-xs text-muted mt-8">Quota</div></div>
+          </div>
+          <div class="mt-16">
+            <div class="progress-label"><span>Quota attainment</span><span>${s.quota}%</span></div>
+            <div class="progress-bar" style="height:10px;"><div class="progress-fill ${quotaColor(s.quota)}" style="width:${Math.min(s.quota,100)}%"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Latest AI Coaching Moment</div>
+          </div>
+          ${gongSnippet}
+        </div>
+      </div>
+      <div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <div class="card-title">Capability Scores</div>
+            <span class="badge badge-blue">${capAvg(s)} / 4 avg</span>
+          </div>
+          ${skillBars}
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Coaching Notes</div>
+          </div>
+          ${recentNotes}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ─── GONG CALLS TAB ────────────────────────────────────────────────── */
+function buildGongTab(s) {
+  const calls = (s.gongCalls||[]).slice().reverse();
+  const callHistory = calls.length ? calls.map((c,i) => `
+    <div class="note-card">
+      <div class="note-meta">
+        <span class="badge badge-purple"><i class="ti ti-microphone"></i> ${c.focus}</span>
+        <span class="note-date">${c.date}</span>
+        <span class="badge ${c.score >= 75 ? 'badge-green' : c.score >= 55 ? 'badge-amber' : 'badge-red'}" style="margin-left:auto;">Score: ${c.score}/100</span>
+      </div>
+      <div class="analysis-score-row">
+        <div class="score-pill"><div class="score-pill-value" style="${c.score>=75?'color:var(--green)':c.score>=55?'color:var(--amber)':'color:var(--red)'}">${c.score}</div><div class="score-pill-label">Call Score</div></div>
+        <div class="score-pill"><div class="score-pill-value">${c.talkRatio||'–'}%</div><div class="score-pill-label">Talk Ratio</div></div>
+        ${(c.skillScores||[]).map(sk => `<div class="score-pill"><div class="score-pill-value" style="font-size:20px">${sk.score}</div><div class="score-pill-label">${sk.skill}</div></div>`).join('')}
+      </div>
+      ${(c.moments||[]).map(m => `
+        <div class="moment-card ${m.type}">
+          <div class="moment-label">${m.type === 'positive' ? '✓ Positive' : m.type === 'flag' ? '⚠ Flag' : '💡 Coaching'}</div>
+          ${m.text}
+        </div>
+      `).join('')}
+      ${c.recommendation ? `<div class="grow-section mt-8"><div class="grow-label"><i class="ti ti-bulb"></i> 1:1 Recommendation</div>${c.recommendation}</div>` : ''}
+    </div>
+  `).join('') : '<div class="empty-state"><i class="ti ti-microphone-off"></i><h3>No calls analysed yet</h3><p>Paste a transcript below to get your first AI coaching analysis.</p></div>';
+
+  return `
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Analyse a Gong Transcript</div>
+              <div class="card-subtitle">Paste your call transcript and select a coaching focus</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Coaching Focus</label>
+            <select class="form-control" id="gongFocus_${s.id}">
+              <option value="Discovery">Discovery</option>
+              <option value="Objection Handling">Objection Handling</option>
+              <option value="Pricing">Pricing</option>
+              <option value="Next Steps">Next Steps</option>
+              <option value="Talk Ratio">Talk Ratio</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Call Transcript</label>
+            <textarea class="form-control" id="gongTranscript_${s.id}" placeholder="Paste the call transcript here…" style="min-height:220px;"></textarea>
+          </div>
+          <div id="gongLoading_${s.id}" style="display:none;">
+            <div class="ai-loading"><div class="spinner"></div> Analysing transcript with Claude…</div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="analyseGongCall('${s.id}')">
+            <i class="ti ti-sparkles"></i> Analyse with AI
+          </button>
+          <div id="gongResult_${s.id}" style="margin-top:16px;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-header">
+          <div class="section-title">Call History (${calls.length})</div>
+        </div>
+        ${callHistory}
+      </div>
+    </div>
+  `;
+}
+
+/* ─── SALESFORCE TAB ────────────────────────────────────────────────── */
+function buildSalesforceTab(s) {
+  const pipeline = s.pipeline || [];
+  const stageColors = {
+    'Prospecting': '#94a3b8',
+    'Discovery': '#0ea5e9',
+    'Demo / Eval': '#8b5cf6',
+    'Proposal': '#f59e0b',
+    'Negotiation': '#f97316',
+    'Closed Won': '#22c55e',
+    'Closed Lost': '#ef4444'
+  };
+
+  const pipelineRows = pipeline.map((opp,i) => `
+    <tr>
+      <td>${opp.account}</td>
+      <td><span class="stage-badge" style="background:${stageColors[opp.stage]||'#94a3b8'}22;color:${stageColors[opp.stage]||'#94a3b8'}">${opp.stage}</span></td>
+      <td>$${Number(opp.value||0).toLocaleString()}</td>
+      <td>${opp.close}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="deleteOpp('${s.id}', ${i})" style="padding:3px 8px;color:var(--red);border-color:var(--red);">
+          <i class="ti ti-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">No pipeline opportunities yet</td></tr>`;
+
+  const totalPipeline = pipeline.reduce((a,o) => a + Number(o.value||0), 0);
+
+  return `
+    <div class="grid-2">
+      <div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <div class="card-title">Activity Metrics · Q1</div>
+            <button class="btn btn-primary btn-sm" onclick="saveSalesforceMetrics('${s.id}')"><i class="ti ti-check"></i> Save</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Calls Made</label>
+              <input type="number" class="form-control" id="sf_calls_${s.id}" value="${s.calls||0}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emails Sent</label>
+              <input type="number" class="form-control" id="sf_emails_${s.id}" value="${s.emails||0}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Meetings Booked</label>
+              <input type="number" class="form-control" id="sf_meetings_${s.id}" value="${s.meetings||0}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Opps Created</label>
+              <input type="number" class="form-control" id="sf_opps_${s.id}" value="${s.opps||0}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Demos Delivered</label>
+              <input type="number" class="form-control" id="sf_demos_${s.id}" value="${s.demos||0}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quota Attainment %</label>
+              <input type="number" class="form-control" id="sf_quota_${s.id}" value="${s.quota||0}" min="0" max="200">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Pipeline Opportunities</div>
+              <div class="card-subtitle">Total: $${totalPipeline.toLocaleString()} ARR</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openAddOpp('${s.id}')"><i class="ti ti-plus"></i> Add Opp</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Account</th><th>Stage</th><th>Value</th><th>Close Date</th><th></th></tr></thead>
+              <tbody id="pipelineBody_${s.id}">${pipelineRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ─── CAPABILITIES TAB ──────────────────────────────────────────────── */
+const CAPABILITIES = [
+  { key: 'Customer Focused', desc: 'Builds meaningful relationships; deeply understands customer needs and priorities.' },
+  { key: 'Ensures Accountability', desc: 'Holds self and others to commitments; follows through on actions and next steps.' },
+  { key: 'Action Oriented', desc: 'Seizes opportunities; takes decisive action with urgency and energy.' },
+  { key: 'Plans & Aligns', desc: 'Plans work to meet objectives; effectively balances competing priorities.' },
+  { key: 'Sells Like a Xero', desc: 'Demonstrates Xero\'s values in sales approach; represents brand with pride.' },
+  { key: 'Consultative Selling', desc: 'Diagnoses before prescribing; leads with insight and business value.' },
+  { key: 'Domain Expertise', desc: 'Strong knowledge of accounting workflows, practice management, and the Xero platform.' }
+];
+
+function buildCapabilitiesTab(s) {
+  const caps = s.capabilities || {};
+  const labels = ['1 – Below', '2 – Developing', '3 – Meeting', '4 – Exceeding'];
+
+  const capItems = CAPABILITIES.map(c => {
+    const current = caps[c.key] || 0;
+    const btns = [1,2,3,4].map(n => `
+      <button class="cap-btn ${current === n ? 'active-'+n : ''}"
+        onclick="setCapability('${s.id}', '${c.key}', ${n}, this)">
+        ${n}
+      </button>
+    `).join('');
+    return `
+      <div class="cap-item">
+        <div class="cap-name">${c.key}</div>
+        <div class="cap-desc">${c.desc}</div>
+        <div class="cap-rating">${btns}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="card mb-16" style="padding:14px 20px;">
+      <div class="flex items-center gap-12">
+        <i class="ti ti-info-circle" style="color:var(--xero-blue);font-size:18px;"></i>
+        <div>
+          <div class="font-semibold text-sm">Xero AE Capability Framework</div>
+          <div class="text-xs text-muted mt-8">Rate 1–4 across all 7 capabilities. Ratings save automatically.</div>
+        </div>
+        <div class="badge badge-blue" style="margin-left:auto;">Overall avg: ${capAvg(s)} / 4</div>
+      </div>
+    </div>
+    <div class="cap-grid" id="capGrid_${s.id}">${capItems}</div>
+    <div class="card mt-16" style="padding:14px 20px;">
+      <div class="flex gap-12">
+        ${labels.map((l,i) => `<div class="text-xs text-muted"><span class="cap-btn active-${i+1}" style="pointer-events:none;padding:3px 8px;margin-right:4px;">${i+1}</span>${l}</div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function setCapability(sellerId, capKey, value, btn) {
+  const s = getSeller(sellerId);
+  if (!s) return;
+  if (!s.capabilities) s.capabilities = {};
+  s.capabilities[capKey] = value;
+  saveState();
+  // Update button UI
+  const row = btn.parentElement;
+  row.querySelectorAll('.cap-btn').forEach((b,i) => {
+    b.className = `cap-btn${value === i+1 ? ' active-'+(i+1) : ''}`;
+  });
+  // Update profile header badge
+  renderSellerProfile(sellerId);
+  // Keep tabs
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab) {
+    const label = activeTab.textContent.trim();
+    if (label.includes('Capabilities')) {
+      // Stay on capabilities tab, just re-render header
+    }
+  }
+}
+
+/* ─── COACHING PLAN TAB ─────────────────────────────────────────────── */
+const CM_BASE = 'https://xero-change-management.vercel.app';
+const TRAINING_LINKS = {
+  'Discovery': [['Discovery Simulations','/training/discovery-simulations'],['Workflow Pain Finder','/discovery/workflow-pain-finder'],['Change Readiness Scorecard','/discovery/change-readiness-scorecard']],
+  'Objection Handling': [['Objection Handling','/training/objection-handling'],['Staff Resistance Playbook','/change-management/staff-resistance-playbook'],['What Staff Are Actually Worried About','/change-management/what-staff-are-actually-worried-about']],
+  'Pricing': [['Objection Handling','/training/objection-handling'],['Example Partner Conversations','/training/example-partner-conversations'],['Mutual Action Plan','/templates/mutual-action-plan']],
+  'Next Steps': [['What Good Sounds Like','/training/what-good-sounds-like'],['Mutual Action Plan','/templates/mutual-action-plan'],['30 / 60 / 90 Plans','/change-management/30-60-90-plans']],
+  'Talk Ratio': [['Conversation Intelligence','/training/conversation-intelligence'],['What Good Sounds Like','/training/what-good-sounds-like'],['Interactive Roleplays','/training/interactive-roleplays']]
+};
+function trainingLinks(skill) {
+  const links = TRAINING_LINKS[skill] || TRAINING_LINKS['Discovery'];
+  return links.map(([label, path]) => `
+    <a href="${CM_BASE}${path}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:13px;color:var(--text);transition:border-color .15s;" onmouseover="this.style.borderColor='var(--xero-blue)'" onmouseout="this.style.borderColor='var(--border)'">
+      <i class="ti ti-school" style="color:var(--xero-blue);"></i> ${label}
+      <i class="ti ti-external-link" style="margin-left:auto;font-size:12px;color:var(--text-light);"></i>
+    </a>`).join('');
+}
+
+function buildCoachingPlanTab(s) {
+  const g = s.grow || {};
+  return `
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">GROW Framework</div>
+            <button class="btn btn-primary btn-sm" onclick="saveGrow('${s.id}')"><i class="ti ti-check"></i> Save Plan</button>
+          </div>
+          <div class="grow-section">
+            <div class="grow-label"><i class="ti ti-flag"></i> Goal</div>
+            <textarea class="form-control" id="grow_goal_${s.id}" rows="3" placeholder="What does success look like this quarter?">${g.goal||''}</textarea>
+          </div>
+          <div class="grow-section">
+            <div class="grow-label"><i class="ti ti-map"></i> Reality</div>
+            <textarea class="form-control" id="grow_reality_${s.id}" rows="3" placeholder="Where are they now? What's working / not working?">${g.reality||''}</textarea>
+          </div>
+          <div class="grow-section">
+            <div class="grow-label"><i class="ti ti-bulb"></i> Options</div>
+            <textarea class="form-control" id="grow_options_${s.id}" rows="3" placeholder="What are the possible paths forward?">${g.options||''}</textarea>
+          </div>
+          <div class="grow-section">
+            <div class="grow-label"><i class="ti ti-check"></i> Will</div>
+            <textarea class="form-control" id="grow_will_${s.id}" rows="3" placeholder="What will they commit to? By when?">${g.will||''}</textarea>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <div class="card-title">Focus Areas</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Primary Capability Focus</label>
+            <select class="form-control" id="grow_capFocus_${s.id}">
+              ${CAPABILITIES.map(c => `<option ${g.capFocus===c.key?'selected':''}>${c.key}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Linked Gong Skill Area</label>
+            <select class="form-control" id="grow_gongSkill_${s.id}">
+              ${['Discovery','Objection Handling','Pricing','Next Steps','Talk Ratio'].map(k => `<option ${g.gongSkill===k?'selected':''}>${k}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header">
+            <div class="card-title">Recommended Training</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">From the Change Management workspace, matched to the linked Gong skill area.</div>
+          ${trainingLinks(g.gongSkill)}
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Development Summary</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Strengths</label>
+            <textarea class="form-control" id="grow_strengths_${s.id}" rows="3" placeholder="What are their key strengths?">${g.strengths||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Development Areas</label>
+            <textarea class="form-control" id="grow_development_${s.id}" rows="3" placeholder="What are their main areas to work on?">${g.development||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Accountability Plan</label>
+            <textarea class="form-control" id="grow_accountability_${s.id}" rows="3" placeholder="How will progress be tracked?">${g.accountability||''}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function saveGrow(id) {
+  const s = getSeller(id);
+  if (!s) return;
+  s.grow = {
+    goal: document.getElementById(`grow_goal_${id}`)?.value || '',
+    reality: document.getElementById(`grow_reality_${id}`)?.value || '',
+    options: document.getElementById(`grow_options_${id}`)?.value || '',
+    will: document.getElementById(`grow_will_${id}`)?.value || '',
+    capFocus: document.getElementById(`grow_capFocus_${id}`)?.value || '',
+    gongSkill: document.getElementById(`grow_gongSkill_${id}`)?.value || '',
+    strengths: document.getElementById(`grow_strengths_${id}`)?.value || '',
+    development: document.getElementById(`grow_development_${id}`)?.value || '',
+    accountability: document.getElementById(`grow_accountability_${id}`)?.value || ''
+  };
+  saveState();
+  showToast('Coaching plan saved ✓');
+}
+
+/* ─── COACHING NOTES TAB ────────────────────────────────────────────── */
+function buildNotesTab(s) {
+  const notes = (s.notes||[]).slice().reverse();
+  const noteCards = notes.map(n => `
+    <div class="note-card" id="noteCard_${n.id}">
+      <div class="note-meta">
+        <span class="badge badge-gray">${n.type}</span>
+        <span class="note-date">${n.date}</span>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="startEditNote('${s.id}','${n.id}')"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:transparent;" onclick="deleteNote('${s.id}','${n.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="note-body" id="noteBody_${n.id}">${escHtml(n.body)}</div>
+      <div id="noteEdit_${n.id}" style="display:none;margin-top:10px;">
+        <textarea class="form-control" id="noteEditArea_${n.id}" rows="6">${escHtml(n.body)}</textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-primary btn-sm" onclick="saveNoteEdit('${s.id}','${n.id}')"><i class="ti ti-check"></i> Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelNoteEdit('${n.id}')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `).join('') || `<div class="empty-state"><i class="ti ti-notebook"></i><h3>No coaching notes yet</h3><p>Log your first session below.</p></div>`;
+
+  return `
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Log Coaching Session</div>
+              <div class="card-subtitle">Type notes or upload a meeting transcript for AI summarisation</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Session Date</label>
+              <input type="date" class="form-control" id="note_date_${s.id}" value="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Session Type</label>
+              <select class="form-control" id="note_type_${s.id}">
+                <option>1:1 Coaching</option>
+                <option>Call Debrief</option>
+                <option>Pipeline Review</option>
+                <option>PIP Check-in</option>
+                <option>Onboarding</option>
+                <option>Skill Development</option>
+                <option>General</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Coaching Notes</label>
+            <textarea class="form-control" id="note_body_${s.id}" rows="8" placeholder="Enter notes from this coaching session…"></textarea>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div class="form-label">Or upload a meeting transcript (.txt)</div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input type="file" accept=".txt" id="note_transcript_${s.id}" style="font-size:12px;color:var(--text-muted);" onchange="handleTranscriptUpload('${s.id}', this)">
+            </div>
+          </div>
+          <div id="noteAiLoading_${s.id}" style="display:none;">
+            <div class="ai-loading"><div class="spinner"></div> Summarising transcript with Claude…</div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="saveNote('${s.id}')">
+            <i class="ti ti-plus"></i> Save Note
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="section-header">
+          <div class="section-title">Session History (${(s.notes||[]).length})</div>
+          ${(s.notes||[]).length ? `<button class="btn btn-ghost btn-sm" onclick="exportNotes('${s.id}')"><i class="ti ti-download"></i> Export</button>` : ''}
+        </div>
+        ${noteCards}
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NOTE ACTIONS
+═══════════════════════════════════════════════════════════════════════ */
+function saveNote(id) {
+  const s = getSeller(id);
+  const date = document.getElementById(`note_date_${id}`)?.value;
+  const type = document.getElementById(`note_type_${id}`)?.value;
+  const body = document.getElementById(`note_body_${id}`)?.value?.trim();
+  if (!body) { showToast('Please enter some notes first', 'error'); return; }
+  const note = { id: 'n_' + Date.now(), date, type, body, ts: Date.now() };
+  if (!s.notes) s.notes = [];
+  s.notes.push(note);
+  saveState();
+  renderSidebar();
+  renderTab('notes', id);
+  showToast('Note saved ✓');
+}
+
+function startEditNote(sellerId, noteId) {
+  document.getElementById(`noteBody_${noteId}`).style.display = 'none';
+  document.getElementById(`noteEdit_${noteId}`).style.display = 'block';
+}
+
+function cancelNoteEdit(noteId) {
+  document.getElementById(`noteBody_${noteId}`).style.display = 'block';
+  document.getElementById(`noteEdit_${noteId}`).style.display = 'none';
+}
+
+function saveNoteEdit(sellerId, noteId) {
+  const s = getSeller(sellerId);
+  const note = (s.notes||[]).find(n => n.id === noteId);
+  if (!note) return;
+  note.body = document.getElementById(`noteEditArea_${noteId}`)?.value || note.body;
+  saveState();
+  renderTab('notes', sellerId);
+  showToast('Note updated ✓');
+}
+
+function deleteNote(sellerId, noteId) {
+  if (!confirm('Delete this coaching note?')) return;
+  const s = getSeller(sellerId);
+  s.notes = (s.notes||[]).filter(n => n.id !== noteId);
+  saveState();
+  renderSidebar();
+  renderTab('notes', sellerId);
+  showToast('Note deleted');
+}
+
+async function handleTranscriptUpload(sellerId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const loading = document.getElementById(`noteAiLoading_${sellerId}`);
+  const body = document.getElementById(`note_body_${sellerId}`);
+  loading.style.display = 'flex';
+  try {
+    const summary = await callClaude(`You are a sales coaching assistant at Xero Australia.
+    Summarise this meeting or coaching transcript into structured coaching notes for a sales manager.
+    Format: 3-5 key observations, agreed actions (if any), and a brief performance note.
+    Keep it practical and under 200 words. Transcript:\n\n${text.slice(0, 4000)}`);
+    body.value = summary;
+    showToast('Transcript summarised by AI ✓');
+  } catch(e) {
+    showToast('AI summarisation failed — please check your API key', 'error');
+    body.value = text.slice(0, 1000);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GONG ANALYSIS
+═══════════════════════════════════════════════════════════════════════ */
+async function analyseGongCall(sellerId) {
+  const s = getSeller(sellerId);
+  const focus = document.getElementById(`gongFocus_${sellerId}`)?.value;
+  const transcript = document.getElementById(`gongTranscript_${sellerId}`)?.value?.trim();
+  if (!transcript) { showToast('Please paste a transcript first', 'error'); return; }
+
+  const loading = document.getElementById(`gongLoading_${sellerId}`);
+  const resultEl = document.getElementById(`gongResult_${sellerId}`);
+  loading.style.display = 'flex';
+  resultEl.innerHTML = '';
+
+  const prompt = `You are a sales coaching AI for Xero Australia, analysing a sales call transcript.
+The primary coaching focus is: ${focus}.
+
+Analyse the transcript and return a JSON response with EXACTLY this structure:
+{
+  "score": <number 0-100>,
+  "talkRatio": <estimated rep talk % as number>,
+  "skillScores": [
+    {"skill": "Discovery", "score": <1-10>},
+    {"skill": "Objection Handling", "score": <1-10>},
+    {"skill": "Next Steps", "score": <1-10>}
+  ],
+  "moments": [
+    {"type": "positive", "text": "<specific positive moment with timestamp/quote if possible>"},
+    {"type": "flag", "text": "<specific coaching opportunity>"},
+    {"type": "coaching", "text": "<specific coaching moment relevant to focus area>"}
+  ],
+  "recommendation": "<2-3 sentence concrete recommendation for next 1:1>"
+}
+
+Return ONLY valid JSON, no other text.
+
+Transcript:
+${transcript.slice(0, 5000)}`;
+
+  try {
+    const raw = await callClaude(prompt);
+    let result;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      result = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    } catch(e) {
+      throw new Error('Could not parse AI response');
+    }
+
+    const call = {
+      id: 'call_' + Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      focus,
+      score: result.score || 0,
+      talkRatio: result.talkRatio || null,
+      skillScores: result.skillScores || [],
+      moments: result.moments || [],
+      recommendation: result.recommendation || '',
+      ts: Date.now()
+    };
+    if (!s.gongCalls) s.gongCalls = [];
+    s.gongCalls.push(call);
+    // Update gong score (rolling average)
+    const allScores = s.gongCalls.map(c => c.score);
+    s.gong = Math.round(allScores.reduce((a,b)=>a+b,0) / allScores.length);
+    saveState();
+    renderSidebar();
+    document.getElementById(`gongTranscript_${sellerId}`).value = '';
+    renderTab('gong', sellerId);
+    showToast('Call analysed ✓');
+  } catch(e) {
+    resultEl.innerHTML = `<div class="moment-card flag"><div class="moment-label">Error</div>${e.message || 'Analysis failed — check your API key.'}</div>`;
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SALESFORCE ACTIONS
+═══════════════════════════════════════════════════════════════════════ */
+function saveSalesforceMetrics(id) {
+  const s = getSeller(id);
+  s.calls = parseInt(document.getElementById(`sf_calls_${id}`)?.value) || 0;
+  s.emails = parseInt(document.getElementById(`sf_emails_${id}`)?.value) || 0;
+  s.meetings = parseInt(document.getElementById(`sf_meetings_${id}`)?.value) || 0;
+  s.opps = parseInt(document.getElementById(`sf_opps_${id}`)?.value) || 0;
+  s.demos = parseInt(document.getElementById(`sf_demos_${id}`)?.value) || 0;
+  s.quota = parseInt(document.getElementById(`sf_quota_${id}`)?.value) || 0;
+  saveState();
+  renderSidebar();
+  // Refresh the profile header
+  const header = document.getElementById('profileHeader');
+  if (header) {
+    const avg = capAvg(s);
+    header.querySelector('.profile-tags').innerHTML = `
+      <span class="badge ${quotaBadge(s.quota)}"><i class="ti ti-target"></i> ${s.quota}% quota</span>
+      <span class="badge badge-blue"><i class="ti ti-microphone"></i> ${s.gong} Gong score</span>
+      <span class="badge badge-gray"><i class="ti ti-chart-bar"></i> ${avg} cap. avg</span>
+      <span class="badge badge-purple"><i class="ti ti-notebook"></i> ${(s.notes||[]).length} notes</span>
+    `;
+  }
+  showToast('Activity metrics saved ✓');
+}
+
+function openAddOpp(sellerId) {
+  state.currentOppSellerId = sellerId;
+  document.getElementById('oppClose').value = new Date().toISOString().split('T')[0];
+  openModal('addOppModal');
+}
+
+function confirmAddOpp() {
+  const id = state.currentOppSellerId;
+  const s = getSeller(id);
+  if (!s) return;
+  const account = document.getElementById('oppAccount').value.trim();
+  const stage = document.getElementById('oppStage').value;
+  const value = parseInt(document.getElementById('oppValue').value) || 0;
+  const close = document.getElementById('oppClose').value;
+  if (!account) { showToast('Please enter an account name', 'error'); return; }
+  if (!s.pipeline) s.pipeline = [];
+  s.pipeline.push({ account, stage, value, close });
+  saveState();
+  closeModal('addOppModal');
+  renderTab('salesforce', id);
+  showToast('Opportunity added ✓');
+}
+
+function deleteOpp(sellerId, idx) {
+  const s = getSeller(sellerId);
+  if (!s) return;
+  s.pipeline.splice(idx, 1);
+  saveState();
+  renderTab('salesforce', sellerId);
+  showToast('Opportunity removed');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADD SELLER
+═══════════════════════════════════════════════════════════════════════ */
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedColor = el.dataset.color;
+}
+
+function confirmAddSeller() {
+  const first = document.getElementById('newSellerFirst').value.trim();
+  const last = document.getElementById('newSellerLast').value.trim();
+  const territory = document.getElementById('newSellerTerritory').value.trim();
+  if (!first || !last) { showToast('Please enter a first and last name', 'error'); return; }
+  const s = makeSeller(first, last, territory || 'Unassigned', state.selectedColor, {});
+  state.sellers.push(s);
+  saveState();
+  renderSidebar();
+  closeModal('addSellerModal');
+  document.getElementById('newSellerFirst').value = '';
+  document.getElementById('newSellerLast').value = '';
+  document.getElementById('newSellerTerritory').value = '';
+  showToast(`${first} ${last} added ✓`);
+  showSeller(s.id);
+}
+
+function deleteSeller(id) {
+  const s = getSeller(id);
+  if (!s) return;
+  if (!confirm(`Remove ${sellerFullName(s)} and all their coaching data? This cannot be undone.`)) return;
+  state.sellers = state.sellers.filter(x => x.id !== id);
+  state.currentSellerId = null;
+  saveState();
+  renderSidebar();
+  showView('dashboard', document.getElementById('nav-dashboard'));
+  showToast(`${sellerFullName(s)} removed`);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CLAUDE API
+═══════════════════════════════════════════════════════════════════════ */
+async function callClaude(prompt) {
+  if (!state.apiKey) {
+    openModal('apiKeyModal');
+    throw new Error('API key required. Please enter your Anthropic API key.');
+  }
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': state.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error: ${response.status}`);
+  }
+  const data = await response.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   API KEY
+═══════════════════════════════════════════════════════════════════════ */
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const gleanUrl = document.getElementById('gleanUrlInput')?.value.trim();
+  const gleanToken = document.getElementById('gleanTokenInput')?.value.trim();
+  if (key) state.apiKey = key;
+  if (gleanUrl && gleanToken) {
+    localStorage.setItem('glean_creds', JSON.stringify({ url: gleanUrl.replace(/^https?:\/\//,'').replace(/\/$/,''), token: gleanToken }));
+    // Pre-fill Glean sync modal fields
+    const urlEl = document.getElementById('gleanInstanceUrl');
+    const tokEl = document.getElementById('gleanApiToken');
+    if (urlEl) urlEl.value = gleanUrl;
+    if (tokEl) tokEl.value = gleanToken;
+  }
+  saveState();
+  closeModal('apiKeyModal');
+  showToast('Keys saved ✓');
+}
+
+function loadGleanCreds() {
+  const saved = JSON.parse(localStorage.getItem('glean_creds') || '{}');
+  const urlEl = document.getElementById('gleanUrlInput');
+  const tokEl = document.getElementById('gleanTokenInput');
+  if (urlEl && saved.url) urlEl.value = saved.url;
+  if (tokEl && saved.token) tokEl.value = saved.token;
+}
+
+function skipApiKey() {
+  closeModal('apiKeyModal');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   IMPORT / EXPORT
+═══════════════════════════════════════════════════════════════════════ */
+function exportAll() {
+  const data = JSON.stringify({ sellers: state.sellers }, null, 2); // API keys are never exported
+  navigator.clipboard.writeText(data).then(() => {
+    showToast('Full dataset copied to clipboard ✓');
+  }).catch(() => {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'xero-coaching-export.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+function triggerImport() {
+  document.getElementById('importFile').click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.sellers) {
+        state.sellers = data.sellers;
+        saveState();
+        renderSidebar();
+        showView('dashboard', document.getElementById('nav-dashboard'));
+        renderDashboard();
+        showToast('Data imported successfully ✓');
+      } else {
+        showToast('Invalid file format', 'error');
+      }
+    } catch(e) {
+      showToast('Could not read file', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function exportNotes(sellerId) {
+  const s = getSeller(sellerId);
+  if (!s) return;
+  const lines = [`COACHING NOTES — ${sellerFullName(s)}`, `Territory: ${s.territory}`, `Exported: ${new Date().toLocaleDateString('en-AU')}`, `${'─'.repeat(60)}`, ''];
+  (s.notes||[]).forEach(n => {
+    lines.push(`[${n.date}] ${n.type}`);
+    lines.push(n.body);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${s.first}-${s.last}-coaching-notes.txt`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Notes exported ✓');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.add('hidden');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════════════════ */
+let toastTimeout;
+function showToast(msg, type = 'success') {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;transition:opacity .3s;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = type === 'error' ? 'var(--red)' : '#1e293b';
+  toast.style.color = 'white';
+  toast.style.opacity = '1';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLEAN SYNC
+═══════════════════════════════════════════════════════════════════════ */
+function openGleanSync(sellerId) {
+  // Pre-fill saved creds
+  const saved = JSON.parse(localStorage.getItem('glean_creds') || '{}');
+  if (saved.url) document.getElementById('gleanInstanceUrl').value = saved.url;
+  if (saved.token) document.getElementById('gleanApiToken').value = saved.token;
+
+  // Populate seller dropdown
+  const sel = document.getElementById('gleanSyncSeller');
+  sel.innerHTML = state.sellers.map(s => `<option value="${s.id}">${sellerFullName(s)}</option>`).join('');
+  if (sellerId) {
+    sel.value = sellerId;
+    document.getElementById('gleanSyncTarget').value = 'single';
+    document.getElementById('gleanSyncSellerGroup').style.display = 'block';
+  }
+
+  document.getElementById('gleanSyncSetup').style.display = 'block';
+  document.getElementById('gleanSyncProgress').style.display = 'none';
+  document.getElementById('gleanSyncDoneBtn').style.display = 'none';
+
+  document.getElementById('gleanSyncTarget').onchange = function() {
+    document.getElementById('gleanSyncSellerGroup').style.display = this.value === 'single' ? 'block' : 'none';
+  };
+
+  openModal('gleanSyncModal');
+}
+
+function gleanLog(msg, type = 'info') {
+  const log = document.getElementById('gleanSyncLog');
+  const colors = { info: 'var(--text)', ok: 'var(--green)', warn: 'var(--amber)', err: 'var(--red)' };
+  log.innerHTML += `<div style="color:${colors[type]||colors.info};">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function runGleanSync() {
+  const instanceUrl = document.getElementById('gleanInstanceUrl').value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const token = document.getElementById('gleanApiToken').value.trim();
+  const target = document.getElementById('gleanSyncTarget').value;
+  const singleId = document.getElementById('gleanSyncSeller').value;
+
+  if (!instanceUrl || !token) { showToast('Please enter your Glean URL and API token', 'error'); return; }
+
+  // Save creds
+  localStorage.setItem('glean_creds', JSON.stringify({ url: instanceUrl, token }));
+
+  const sellers = target === 'single' ? state.sellers.filter(s => s.id === singleId) : state.sellers;
+
+  document.getElementById('gleanSyncSetup').style.display = 'none';
+  document.getElementById('gleanSyncProgress').style.display = 'block';
+  document.getElementById('gleanSyncLog').innerHTML = '';
+
+  gleanLog(`🔄 Starting Glean sync for ${sellers.length} AE${sellers.length > 1 ? 's' : ''}…`);
+
+  let totalPipelineAdded = 0, totalCallsAdded = 0, errors = 0;
+
+  for (const seller of sellers) {
+    gleanLog(`\n──────────────────────────`);
+    gleanLog(`👤 ${sellerFullName(seller)}`);
+
+    // ── Pipeline sync ──
+    gleanLog(`  📋 Searching pipeline…`);
+    try {
+      const pipelineQuery = `${sellerFullName(seller)} pipeline opportunities Salesforce`;
+      const pipelineResults = await gleanSearch(instanceUrl, token, pipelineQuery, 8);
+
+      if (pipelineResults.length) {
+        gleanLog(`  Found ${pipelineResults.length} relevant document(s) — extracting with AI…`);
+        const snippets = pipelineResults.map(r =>
+          (r.snippets || []).map(s => s.text || s).join(' ') + ' ' + (r.title || '')
+        ).join('\n\n').slice(0, 3000);
+
+        const aiPrompt = `Extract open pipeline opportunities for ${sellerFullName(seller)} from this Glean search result text.
+Return ONLY a JSON array like: [{"account":"Name","stage":"Stage","value":1234,"close":"YYYY-MM-DD"}]
+Use stages: Prospecting, Discovery, Demo / Eval, Proposal, Negotiation, Closed Won, Closed Lost.
+If value is unclear use 0. If close date unclear use empty string. Extract up to 10 opportunities.
+Return [] if nothing found. ONLY return the JSON array, no other text.
+
+Text:
+${snippets}`;
+
+        const aiResponse = await callClaude(aiPrompt);
+        const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const opps = JSON.parse(jsonMatch[0]);
+          if (opps && opps.length) {
+            seller.pipeline = opps.map(o => ({
+              account: o.account || 'Unknown',
+              stage: o.stage || 'Prospecting',
+              value: parseInt(o.value) || 0,
+              close: normaliseDate(o.close)
+            }));
+            totalPipelineAdded += opps.length;
+            gleanLog(`  ✓ ${opps.length} opportunities imported`, 'ok');
+          } else {
+            gleanLog(`  – No opportunities extracted from documents`, 'warn');
+          }
+        } else {
+          gleanLog(`  – Could not parse pipeline data`, 'warn');
+        }
+      } else {
+        gleanLog(`  – No pipeline documents found in Glean`, 'warn');
+      }
+    } catch(e) {
+      gleanLog(`  ✗ Pipeline sync error: ${e.message}`, 'err');
+      errors++;
+    }
+
+    // ── Gong call sync ──
+    gleanLog(`  🎙 Searching Gong calls…`);
+    try {
+      const gongResults = await gleanSearch(instanceUrl, token, sellerFullName(seller), 10, 'gong');
+
+      if (gongResults.length) {
+        gleanLog(`  Found ${gongResults.length} Gong call(s)`);
+        let added = 0;
+        gongResults.forEach(r => {
+          const date = normaliseDate(r.updateTime?.split('T')[0] || r.createTime?.split('T')[0] || '');
+          const title = r.title || 'Gong Call';
+          // Estimate talk ratio from snippets if available
+          const snippetText = (r.snippets || []).map(s => s.text || s).join(' ');
+          const talkLines = (snippetText.match(new RegExp(sellerFullName(seller).split(' ')[0], 'gi')) || []).length;
+          const totalLines = snippetText.split('\n').length || 10;
+          const talkRatio = Math.min(Math.round((talkLines / Math.max(totalLines, 1)) * 100 * 2), 80) || null;
+
+          // Dedupe by title + date
+          const exists = (seller.gongCalls || []).some(c => c.title === title && c.date === date);
+          if (!exists) {
+            if (!seller.gongCalls) seller.gongCalls = [];
+            seller.gongCalls.push({
+              id: 'glean_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+              date, title,
+              focus: 'Imported from Glean',
+              score: 0, // Will be set when AI analyses
+              talkRatio,
+              moments: [],
+              recommendation: '',
+              ts: new Date(date).getTime() || Date.now(),
+              gleanUrl: r.url || ''
+            });
+            added++;
+            totalCallsAdded++;
+          }
+        });
+        // Update rolling gong score from non-zero scored calls
+        const scored = (seller.gongCalls || []).filter(c => c.score > 0);
+        if (scored.length) seller.gong = Math.round(scored.reduce((a,c) => a + c.score, 0) / scored.length);
+        gleanLog(`  ✓ ${added} new call(s) added (${(seller.gongCalls||[]).length - added} already existed)`, 'ok');
+      } else {
+        gleanLog(`  – No Gong calls found in Glean`, 'warn');
+      }
+    } catch(e) {
+      gleanLog(`  ✗ Gong sync error: ${e.message}`, 'err');
+      errors++;
+    }
+  }
+
+  saveState();
+  gleanLog(`\n──────────────────────────`);
+  gleanLog(`✅ Sync complete — ${totalPipelineAdded} opportunities, ${totalCallsAdded} Gong calls synced${errors ? `, ${errors} error(s)` : ''}.`, 'ok');
+  document.getElementById('gleanSyncDoneBtn').style.display = 'inline-flex';
+
+  if (state.currentSellerId && document.getElementById('view-seller').classList.contains('active')) {
+    renderSellerProfile(state.currentSellerId);
+  }
+}
+
+async function gleanSearch(instanceUrl, token, query, numResults = 10, app = null) {
+  const body = { query, pageSize: numResults };
+  if (app) body.requestOptions = { facetFilters: [{ fieldName: 'app', values: [{ value: app }] }] };
+
+  const resp = await fetch(`https://${instanceUrl}/rest/api/v1/search`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || `Glean API error ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  return (data.results || []).map(r => ({
+    title: r.document?.title || r.title || '',
+    url: r.document?.url || r.url || '',
+    snippets: (r.snippets || []).map(s => s.text || s.snippet || ''),
+    updateTime: r.document?.updatedAt || r.document?.createTime || '',
+    createTime: r.document?.createTime || ''
+  }));
+}
+
+// Also add Glean sync button to seller profile topbar actions
+const _origRenderSellerProfile = renderSellerProfile;
+renderSellerProfile = function(id) {
+  _origRenderSellerProfile(id);
+  // Append Glean sync button to topbar
+  const actions = document.getElementById('topbarActions');
+  if (actions) {
+    const gleanBtn = document.createElement('button');
+    gleanBtn.className = 'btn btn-ghost btn-sm';
+    gleanBtn.style.color = '#f59e0b';
+    gleanBtn.style.borderColor = '#f59e0b';
+    gleanBtn.innerHTML = '<i class="ti ti-refresh"></i> Sync Glean';
+    gleanBtn.onclick = () => openGleanSync(id);
+    actions.appendChild(gleanBtn);
+    const rmBtn = document.createElement('button');
+    rmBtn.className = 'btn btn-ghost btn-sm';
+    rmBtn.style.color = 'var(--red)';
+    rmBtn.innerHTML = '<i class="ti ti-trash"></i>';
+    rmBtn.title = 'Remove this AE';
+    rmBtn.onclick = () => deleteSeller(id);
+    actions.appendChild(rmBtn);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MEETING PREP GENERATOR
+═══════════════════════════════════════════════════════════════════════ */
+
+// Session-level history of prep briefs generated
+const prepHistoryLog = [];
+
+/* Initialise the Meeting Prep view — populate seller dropdown, set default date */
+function renderMeetingPrepView() {
+  // Populate seller selector
+  const sel = document.getElementById('prepSeller');
+  if (sel) {
+    sel.innerHTML = '<option value="">Any team member</option>' +
+      state.sellers.map(s => `<option value="${s.id}">${sellerFullName(s)}</option>`).join('');
+  }
+
+  // Default meeting date to today
+  const dateEl = document.getElementById('prepDate');
+  if (dateEl && !dateEl.value) {
+    dateEl.value = new Date().toISOString().split('T')[0];
+  }
+
+  // Show/hide Glean warning
+  const creds = JSON.parse(localStorage.getItem('glean_creds') || '{}');
+  const warn = document.getElementById('prepGleanWarning');
+  if (warn) warn.style.display = (creds.url && creds.token) ? 'none' : 'block';
+
+  // Render history log
+  renderPrepHistory();
+}
+
+/* Autocomplete account suggestions from sellers' pipeline */
+function prepAccountSuggest(value) {
+  const sugBox = document.getElementById('prepAccountSuggestions');
+  if (!sugBox) return;
+  const q = (value || '').trim().toLowerCase();
+  if (q.length < 2) { sugBox.style.display = 'none'; return; }
+
+  // Collect all unique account names from all sellers' pipelines
+  const accounts = new Set();
+  state.sellers.forEach(s => {
+    (s.pipeline || []).forEach(opp => {
+      if (opp.account) accounts.add(opp.account);
+    });
+  });
+
+  const matches = [...accounts].filter(a => a.toLowerCase().includes(q)).slice(0, 6);
+  if (matches.length === 0) { sugBox.style.display = 'none'; return; }
+
+  sugBox.style.display = 'block';
+  sugBox.innerHTML = matches.map(a => `
+    <div style="padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);"
+         onmousedown="selectPrepAccount('${a.replace(/'/g,'\\\'')}')"
+         onmouseover="this.style.background='var(--bg)'"
+         onmouseout="this.style.background=''">${a}</div>
+  `).join('');
+}
+
+function selectPrepAccount(name) {
+  const el = document.getElementById('prepAccount');
+  if (el) el.value = name;
+  const sugBox = document.getElementById('prepAccountSuggestions');
+  if (sugBox) sugBox.style.display = 'none';
+}
+
+/* Render the session history panel */
+function renderPrepHistory() {
+  const el = document.getElementById('prepHistory');
+  if (!el) return;
+  if (prepHistoryLog.length === 0) {
+    el.innerHTML = 'None yet this session.';
+    return;
+  }
+  el.innerHTML = prepHistoryLog.slice().reverse().map((h,i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;"
+         onclick="restorePrepBrief(${prepHistoryLog.length - 1 - i})">
+      <div>
+        <div style="font-weight:600;color:var(--text);font-size:12px;">${h.account}</div>
+        <div style="color:var(--text-muted);font-size:11px;">${h.seller} · ${h.date}</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--text-light);font-size:14px;"></i>
+    </div>
+  `).join('');
+}
+
+function restorePrepBrief(idx) {
+  const h = prepHistoryLog[idx];
+  if (!h) return;
+  document.getElementById('prepOutput').innerHTML = h.html;
+}
+
+/* ── Main generate function ───────────────────────────────────────────── */
+async function generateMeetingPrep() {
+  const account   = (document.getElementById('prepAccount')?.value || '').trim();
+  const sellerId  = document.getElementById('prepSeller')?.value || '';
+  const date      = document.getElementById('prepDate')?.value || '';
+  const context   = (document.getElementById('prepContext')?.value || '').trim();
+  const callDepth = parseInt(document.getElementById('prepCallDepth')?.value || '5');
+
+  if (!account) { showToast('Please enter an account / firm name', 'error'); return; }
+  if (!state.apiKey) { openModal('apiKeyModal'); showToast('Add your Claude API key first', 'error'); return; }
+
+  const loadingEl  = document.getElementById('prepLoading');
+  const loadingMsg = document.getElementById('prepLoadingMsg');
+  const outputEl   = document.getElementById('prepOutput');
+  const genBtn     = document.querySelector('[onclick="generateMeetingPrep()"]');
+
+  const setLoading = (show, msg) => {
+    loadingEl.style.display = show ? 'block' : 'none';
+    if (msg && loadingMsg) loadingMsg.textContent = msg;
+    if (genBtn) genBtn.disabled = show;
+  };
+
+  setLoading(true, 'Searching Glean for previous calls…');
+  outputEl.innerHTML = `<div style="text-align:center;padding:60px 24px;color:var(--text-muted);">
+    <div class="spinner" style="margin:0 auto 16px;"></div>
+    <div style="font-size:14px;">Building your prep brief…</div>
+  </div>`;
+
+  try {
+    // ── 1. Find seller info ───────────────────────────────────────────
+    const seller = sellerId ? getSeller(sellerId) : null;
+    const sellerName = seller ? sellerFullName(seller) : 'Team';
+
+    // ── 2. Find local pipeline data for this account ──────────────────
+    const localPipeline = [];
+    state.sellers.forEach(s => {
+      (s.pipeline || []).forEach(opp => {
+        if (opp.account && opp.account.toLowerCase().includes(account.toLowerCase())) {
+          localPipeline.push({ seller: sellerFullName(s), ...opp });
+        }
+      });
+    });
+
+    // ── 3. Find local Gong calls for this account ─────────────────────
+    const localCalls = [];
+    const searchSellers = sellerId ? [seller].filter(Boolean) : state.sellers;
+    searchSellers.forEach(s => {
+      (s.gongCalls || []).forEach(c => {
+        const titleMatch = (c.title || '').toLowerCase().includes(account.toLowerCase());
+        const focusMatch = (c.focus || '').toLowerCase().includes(account.toLowerCase());
+        if (titleMatch || focusMatch) {
+          localCalls.push({ seller: sellerFullName(s), ...c });
+        }
+      });
+    });
+
+    // ── 4. Search Glean ───────────────────────────────────────────────
+    let gleanResults = [];
+    const creds = JSON.parse(localStorage.getItem('glean_creds') || '{}');
+    if (creds.url && creds.token) {
+      setLoading(true, `Searching Glean for "${account}" calls…`);
+      try {
+        const queries = [
+          `${account} Gong call`,
+          sellerId ? `${account} ${sellerName}` : account
+        ];
+        for (const q of queries) {
+          const results = await gleanSearch(creds.url, creds.token, q, callDepth);
+          gleanResults.push(...results);
+        }
+        // Deduplicate by URL
+        const seen = new Set();
+        gleanResults = gleanResults.filter(r => {
+          if (seen.has(r.url)) return false;
+          seen.add(r.url);
+          return true;
+        }).slice(0, callDepth);
+      } catch(err) {
+        console.warn('Glean search failed:', err);
+        showToast('Glean search failed — generating from local data', 'error');
+      }
+    }
+
+    // ── 5. Build context for Claude ───────────────────────────────────
+    setLoading(true, 'Synthesising brief with Claude…');
+
+    const pipelineSection = localPipeline.length > 0 ?
+      `PIPELINE / DEALS:\n${localPipeline.map(o =>
+        `- ${o.account}: ${o.stage || 'unknown stage'}, $${(o.value||0).toLocaleString()}, closes ${o.close || 'TBD'} (AE: ${o.seller})`
+      ).join('\n')}` : 'No matching pipeline found locally.';
+
+    const localCallSection = localCalls.length > 0 ?
+      `LOCAL GONG CALLS (from coaching platform):\n${localCalls.map(c =>
+        `- ${c.date}: "${c.title || c.focus}" | Score: ${c.score || 'n/a'} | Talk ratio: ${c.talkRatio || 'n/a'}% | AE: ${c.seller}${c.moments && c.moments.length ? '\n  Key moments: ' + c.moments.slice(0,3).map(m=>m.text).join('; ') : ''}${c.recommendation ? '\n  Coach note: ' + c.recommendation : ''}`
+      ).join('\n')}` : '';
+
+    const gleanSection = gleanResults.length > 0 ?
+      `GLEAN SEARCH RESULTS (${gleanResults.length} items):\n${gleanResults.map(r =>
+        `Title: ${r.title}\n${r.snippets.slice(0,2).join(' ').substring(0,400)}`
+      ).join('\n\n')}` : '';
+
+    const todayStr = new Date().toLocaleDateString('en-AU', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    const prompt = `You are preparing a sales meeting prep brief for an account executive at Xero Australia (cloud accounting software).
+
+MEETING DETAILS:
+- Account / Firm: ${account}
+- AE: ${sellerName}
+- Meeting Date: ${date || todayStr}
+${context ? `- Meeting Goal / Context: ${context}` : ''}
+
+${pipelineSection}
+
+${localCallSection}
+
+${gleanSection}
+
+Based on all the above, generate a structured meeting prep brief with these EXACT sections (use the section headers exactly as written):
+
+## Account Snapshot
+2-3 sentences: what this firm does, their stage in the Xero journey, current deal status and AE ownership.
+
+## Call History
+Bullet list of previous calls/touchpoints found (date, topic, key outcome). If none found, note that this appears to be an early-stage relationship or a new prospect.
+
+## Key Themes
+3-5 themes or recurring topics from previous calls (e.g. pricing concerns, migration complexity, champion engagement, product fit questions). If no prior calls, list likely themes based on the deal stage.
+
+## Previous Commitments
+Two sub-lists:
+**AE committed to:** (things Harvey/AE said they would do)
+**Partner/Client committed to:** (things the firm said they would do)
+If none identified, say "None identified from available call history."
+
+## Suggested Talking Points
+5-7 numbered, specific, actionable talking points tailored to this meeting. Reference specifics from the call history where possible. Frame them as conversation starters or questions, not product pitches.
+
+## Watch Outs
+2-4 risks, objections, or sensitivities to be aware of. Things that came up as concerns in prior calls, or typical friction points at this deal stage.
+
+Keep the tone professional but conversational — like a smart colleague briefing a senior AE 10 minutes before their meeting. Be specific and actionable. If data is limited, say so and make reasonable inferences based on deal stage.`;
+
+    const brief = await callClaude(prompt);
+
+    // ── 6. Render the brief ────────────────────────────────────────────
+    const briefHtml = renderPrepBriefHtml(account, sellerName, date || todayStr, brief, gleanResults.length, localCalls.length);
+    outputEl.innerHTML = briefHtml;
+
+    // Add to history
+    prepHistoryLog.push({
+      account,
+      seller: sellerName,
+      date: date || new Date().toISOString().split('T')[0],
+      html: briefHtml
+    });
+    renderPrepHistory();
+
+    showToast('Prep brief ready ✓');
+
+  } catch (err) {
+    console.error('Meeting prep error:', err);
+    outputEl.innerHTML = `<div class="card" style="border-left:3px solid var(--red);">
+      <div style="color:var(--red);font-weight:600;margin-bottom:8px;"><i class="ti ti-alert-circle"></i> Error generating brief</div>
+      <div style="font-size:13px;color:var(--text-muted);">${err.message || 'Unknown error. Check your API key and try again.'}</div>
+    </div>`;
+    showToast('Failed to generate brief', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ── Render the brief HTML from Claude's markdown output ──────────────── */
+function renderPrepBriefHtml(account, sellerName, date, markdownText, gleanCount, localCallCount) {
+  // Parse sections from the markdown
+  const sections = parsePrepBriefSections(markdownText);
+  const dataSourceBadge = gleanCount > 0
+    ? `<span class="badge badge-blue" style="font-size:10px;"><i class="ti ti-brand-google" style="font-size:10px;"></i> ${gleanCount} Glean results</span>`
+    : `<span class="badge" style="font-size:10px;background:var(--bg);border:1px solid var(--border);">Local data only</span>`;
+
+  const callBadge = (gleanCount + localCallCount) > 0
+    ? `<span class="badge badge-green" style="font-size:10px;">${gleanCount + localCallCount} calls reviewed</span>`
+    : `<span class="badge badge-amber" style="font-size:10px;">No prior calls found</span>`;
+
+  const sectionIcons = {
+    'Account Snapshot': 'ti-building',
+    'Call History': 'ti-phone',
+    'Key Themes': 'ti-bulb',
+    'Previous Commitments': 'ti-checkbox',
+    'Suggested Talking Points': 'ti-message-dots',
+    'Watch Outs': 'ti-alert-triangle',
+  };
+
+  const sectionColors = {
+    'Account Snapshot': 'var(--xero-blue)',
+    'Call History': 'var(--purple)',
+    'Key Themes': 'var(--green)',
+    'Previous Commitments': '#0ea5e9',
+    'Suggested Talking Points': 'var(--xero-blue)',
+    'Watch Outs': 'var(--amber)',
+  };
+
+  const sectionsHtml = sections.map(sec => {
+    const icon = sectionIcons[sec.title] || 'ti-notes';
+    const color = sectionColors[sec.title] || 'var(--text-muted)';
+    const bodyHtml = formatPrepSectionBody(sec.title, sec.body);
+    return `
+      <div class="prep-section">
+        <div class="prep-section-title">
+          <i class="ti ${icon}" style="color:${color};"></i>
+          ${sec.title}
+        </div>
+        <div class="prep-section-body">${bodyHtml}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="card prep-brief">
+      <div class="prep-header">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">${account}</div>
+          <div style="font-size:13px;color:var(--text-muted);">${sellerName} · ${formatDateDisplay(date)}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${callBadge}
+          ${dataSourceBadge}
+          <button class="btn btn-ghost btn-sm" onclick="copyPrepBrief()" title="Copy to clipboard">
+            <i class="ti ti-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+      ${sectionsHtml}
+    </div>`;
+}
+
+/* Parse Claude's ## Section markdown into an array of {title, body} */
+function parsePrepBriefSections(text) {
+  const sectionOrder = ['Account Snapshot','Call History','Key Themes','Previous Commitments','Suggested Talking Points','Watch Outs'];
+  const result = [];
+  const lines = text.split('\n');
+  let current = null;
+
+  lines.forEach(line => {
+    const headMatch = line.match(/^##\s+(.+)/);
+    if (headMatch) {
+      if (current) result.push(current);
+      current = { title: headMatch[1].trim(), body: '' };
+    } else if (current) {
+      current.body += line + '\n';
+    }
+  });
+  if (current) result.push(current);
+
+  // Ensure correct order and fill in missing sections
+  const found = result.filter(s => sectionOrder.includes(s.title));
+  const missing = sectionOrder.filter(t => !found.some(s => s.title === t));
+  // Put missing ones at the end as empty
+  return [...sectionOrder.map(t => found.find(s => s.title === t)).filter(Boolean)];
+}
+
+/* Format a section's body — convert markdown bullets/numbered lists to HTML */
+function formatPrepSectionBody(sectionTitle, body) {
+  const lines = body.trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) return '<p style="color:var(--text-muted);font-style:italic;">No information available.</p>';
+
+  if (sectionTitle === 'Suggested Talking Points') {
+    // Numbered talking points
+    const points = [];
+    let buf = '';
+    lines.forEach(line => {
+      const numMatch = line.match(/^\d+\.\s+(.+)/);
+      if (numMatch) { if (buf) points.push(buf.trim()); buf = numMatch[1]; }
+      else if (line.match(/^[-*]\s+/)) { if (buf) points.push(buf.trim()); buf = line.replace(/^[-*]\s+/,''); }
+      else { buf += ' ' + line; }
+    });
+    if (buf) points.push(buf.trim());
+    if (points.length === 0) return '<p>' + lines.join(' ') + '</p>';
+    return points.map((p,i) => `
+      <div class="talking-point">
+        <div class="talking-point-num">${i+1}</div>
+        <div>${p}</div>
+      </div>`).join('');
+  }
+
+  if (sectionTitle === 'Watch Outs') {
+    const items = extractBullets(lines);
+    if (items.length === 0) return '<p>' + lines.join(' ') + '</p>';
+    return items.map(item => `
+      <div class="watchout-item">
+        <i class="ti ti-alert-triangle watchout-icon"></i>
+        <div>${item}</div>
+      </div>`).join('');
+  }
+
+  if (sectionTitle === 'Previous Commitments') {
+    // Has two sub-sections: AE committed / Partner committed
+    const text = body.trim();
+    const aeMatch = text.match(/\*\*AE committed[^*]*\*\*:?\s*\n([\s\S]*?)(?=\*\*|$)/i);
+    const partnerMatch = text.match(/\*\*Partner[^*]*\*\*:?\s*\n([\s\S]*?)(?=\*\*|$)/i);
+    let html = '';
+    if (aeMatch) {
+      const items = extractBullets(aeMatch[1].trim().split('\n').filter(l=>l.trim()));
+      html += `<div style="font-weight:600;font-size:12px;color:var(--xero-blue);margin-bottom:6px;">AE committed to:</div>`;
+      html += items.length ? items.map(item => `<div class="commitment-item"><i class="ti ti-circle-check" style="color:var(--xero-blue);margin-right:8px;font-size:14px;flex-shrink:0;margin-top:1px;"></i><div>${item}</div></div>`).join('') : `<div style="color:var(--text-muted);font-style:italic;font-size:12px;margin-bottom:12px;">None identified</div>`;
+      html += '<div style="margin-top:12px;"></div>';
+    }
+    if (partnerMatch) {
+      const items = extractBullets(partnerMatch[1].trim().split('\n').filter(l=>l.trim()));
+      html += `<div style="font-weight:600;font-size:12px;color:var(--purple);margin-bottom:6px;">Partner / Client committed to:</div>`;
+      html += items.length ? items.map(item => `<div class="commitment-item"><i class="ti ti-circle-check" style="color:var(--purple);margin-right:8px;font-size:14px;flex-shrink:0;margin-top:1px;"></i><div>${item}</div></div>`).join('') : `<div style="color:var(--text-muted);font-style:italic;font-size:12px;">None identified</div>`;
+    }
+    if (!html) {
+      // Fallback: just render as bullets
+      const items = extractBullets(lines);
+      html = items.length ? items.map(item => `<div class="commitment-item"><i class="ti ti-circle-check" style="color:var(--xero-blue);margin-right:8px;font-size:14px;"></i><div>${item}</div></div>`).join('') : lines.map(l=>`<p>${l}</p>`).join('');
+    }
+    return html;
+  }
+
+  if (sectionTitle === 'Call History') {
+    const items = extractBullets(lines);
+    if (items.length === 0) return '<p>' + lines.join(' ') + '</p>';
+    return `<div style="display:flex;flex-direction:column;gap:8px;">${items.map(item => `
+      <div class="call-history-item" style="display:flex;gap:10px;padding:8px 12px;background:var(--bg);border-radius:7px;font-size:13px;">
+        <i class="ti ti-phone-call" style="color:var(--purple);flex-shrink:0;margin-top:2px;"></i>
+        <div>${item}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  if (sectionTitle === 'Key Themes') {
+    const items = extractBullets(lines);
+    if (items.length === 0) return '<p>' + lines.join(' ') + '</p>';
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;">
+      ${items.map((item,i) => {
+        const colors = ['var(--xero-blue)','var(--purple)','var(--green)','var(--amber)','#ec4899'];
+        const c = colors[i % colors.length];
+        return `<div style="padding:6px 12px;background:${c}15;border:1px solid ${c}30;border-radius:20px;font-size:12px;color:${c};font-weight:500;">${item}</div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // Default: paragraphs and bullets
+  return convertMarkdownToHtml(lines.join('\n'));
+}
+
+/* Helper: extract bullet points from an array of lines */
+function extractBullets(lines) {
+  const items = [];
+  let buf = '';
+  lines.forEach(line => {
+    const stripped = line.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/,'').trim();
+    if (line.match(/^[-*•]\s+/) || line.match(/^\d+\.\s+/)) {
+      if (buf) items.push(buf.trim());
+      buf = stripped;
+    } else if (buf && stripped) {
+      buf += ' ' + stripped;
+    } else if (!buf && stripped) {
+      buf = stripped; // plain line, no bullet
+    }
+  });
+  if (buf) items.push(buf.trim());
+  return items.filter(Boolean);
+}
+
+/* Basic markdown → HTML for free-form sections */
+function convertMarkdownToHtml(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^[-*•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul style="padding-left:18px;margin:6px 0;">$&</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^(?!<[ul])/m, '<p>')
+    .replace(/$(?!<\/[ul])/m, '</p>')
+    .trim();
+}
+
+/* Copy the current brief text to clipboard */
+function copyPrepBrief() {
+  const outputEl = document.getElementById('prepOutput');
+  if (!outputEl) return;
+  const text = outputEl.innerText || outputEl.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Brief copied to clipboard ✓');
+  }).catch(() => {
+    showToast('Could not copy — try manually selecting the text', 'error');
+  });
+}
+
+/* Format a date string for display */
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T12:00:00'));
+    return d.toLocaleDateString('en-AU', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+  } catch { return dateStr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CSV IMPORT WIZARD
+═══════════════════════════════════════════════════════════════════════ */
+const csvState = {
+  type: null,       // 'sfpipe' | 'sfact' | 'gong'
+  raw: null,        // raw CSV string
+  parsed: null,     // array of row objects
+  preview: null,    // processed preview data ready to import
+};
+
+const IMPORT_HINTS = {
+  sfpipe: `<strong>How to export from Salesforce:</strong><br>
+    Reports → Open an Opportunity report filtered to your team → Export → CSV<br>
+    <strong>Expected columns (any names work):</strong> Opportunity Owner · Account Name · Stage · Amount · Close Date`,
+  sfact: `<strong>How to export from Salesforce:</strong><br>
+    Reports → Activity report (calls/emails/meetings) grouped by rep → Export → CSV<br>
+    <strong>Expected columns:</strong> Full Name (rep) · Calls · Emails Sent · Meetings · Demos<br>
+    <em>Tip: A "Summary" activity report with row grouped by Owner works best.</em>`,
+  gong: `<strong>How to export from Gong:</strong><br>
+    Stats → Team · Select your reps and date range (e.g. Q1) → Export to CSV<br>
+    <strong>Expected columns:</strong> Rep Name · Call Date · Score · Talk Ratio · Title/Subject`
+};
+
+function openCsvImport() {
+  // Reset state
+  csvState.type = null;
+  csvState.raw = null;
+  csvState.parsed = null;
+  csvState.preview = null;
+  document.querySelectorAll('.import-type-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('csvStep1Next').disabled = true;
+  document.getElementById('csvStep2Next').disabled = true;
+  document.getElementById('importTypeHint').innerHTML = 'Select an import type above to see export instructions.';
+  document.getElementById('dzTitle').textContent = 'Drop your CSV here or click to browse';
+  document.getElementById('dzSub').textContent = 'Exported from Salesforce or Gong as .csv';
+  document.getElementById('csvFileInput').value = '';
+  csvWizardStep(1);
+  openModal('csvImportModal');
+}
+
+function csvWizardStep(step) {
+  [1,2,3].forEach(n => {
+    document.getElementById('csvStep'+n).style.display = n===step ? 'block' : 'none';
+    const ws = document.getElementById('wstep'+n);
+    ws.classList.remove('active','done');
+    if (n === step) ws.classList.add('active');
+    if (n < step) ws.classList.add('done');
+  });
+  if (step === 2) {
+    document.getElementById('csvFormatHint').innerHTML = IMPORT_HINTS[csvState.type] || '';
+  }
+  if (step === 3) {
+    buildCsvPreview();
+  }
+}
+
+function selectImportType(type, el) {
+  csvState.type = type;
+  document.querySelectorAll('.import-type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('csvStep1Next').disabled = false;
+  document.getElementById('importTypeHint').innerHTML = IMPORT_HINTS[type] || '';
+}
+
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csvDropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) loadCsvFile(file);
+}
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (file) loadCsvFile(file);
+}
+
+function loadCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvState.raw = e.target.result;
+    csvState.parsed = parseCSV(csvState.raw);
+    const rows = csvState.parsed.length;
+    document.getElementById('dzTitle').textContent = `✓ ${file.name}`;
+    document.getElementById('dzSub').textContent = `${rows} rows detected`;
+    document.getElementById('csvStep2Next').disabled = rows === 0;
+    if (rows === 0) showToast('No data rows found in CSV', 'error');
+  };
+  reader.readAsText(file);
+}
+
+/* ── CSV Parser ─────────────────────────────────────────────────────── */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = parseCsvLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCsvLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] || '').trim(); });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let cur = '', inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === ',' && !inQuote) {
+      result.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+/* ── Column auto-detection ──────────────────────────────────────────── */
+function findCol(headers, ...patterns) {
+  for (const p of patterns) {
+    const re = typeof p === 'string' ? new RegExp(p, 'i') : p;
+    const found = headers.find(h => re.test(h));
+    if (found) return found;
+  }
+  return null;
+}
+
+function detectColumns(rows, type) {
+  if (!rows.length) return null;
+  const headers = Object.keys(rows[0]);
+
+  if (type === 'sfpipe') {
+    return {
+      owner:   findCol(headers, 'owner', 'rep', 'user', 'assigned'),
+      account: findCol(headers, 'account.name', 'account', 'company', 'organisation', 'customer'),
+      oppName: findCol(headers, 'opportunity.name', 'opportunity', 'opp name', 'deal name', 'name'),
+      stage:   findCol(headers, 'stage', 'status'),
+      amount:  findCol(headers, 'amount', 'arr', 'value', 'revenue', 'acv'),
+      close:   findCol(headers, 'close.date', 'close', 'expected.close', 'target.close')
+    };
+  }
+  if (type === 'sfact') {
+    return {
+      owner:    findCol(headers, 'full.name', 'owner', 'rep', 'user', 'name'),
+      calls:    findCol(headers, 'calls', 'call.count', 'activities.*call', 'logged calls'),
+      emails:   findCol(headers, 'email', 'sent', 'outbound'),
+      meetings: findCol(headers, 'meeting', 'event', 'appointment', 'booked'),
+      demos:    findCol(headers, 'demo', 'presentation'),
+      quota:    findCol(headers, 'quota', 'attainment', 'achievement', '%')
+    };
+  }
+  if (type === 'gong') {
+    return {
+      owner:  findCol(headers, 'rep', 'user', 'name', 'host', 'owner'),
+      date:   findCol(headers, 'date', 'call.date', 'started', 'time'),
+      score:  findCol(headers, 'score', 'engagement', 'gong.score', 'call.score'),
+      talk:   findCol(headers, 'talk.ratio', 'rep.talk', 'host.talk', 'talk.time', 'talk %'),
+      title:  findCol(headers, 'title', 'subject', 'call.name', 'meeting')
+    };
+  }
+  return null;
+}
+
+/* ── Name matching ──────────────────────────────────────────────────── */
+function normName(s) {
+  return (s||'').toLowerCase().replace(/[^a-z\s]/g,'').trim();
+}
+
+function matchSeller(nameInCsv) {
+  const n = normName(nameInCsv);
+  if (!n) return null;
+  // Exact full name
+  let m = state.sellers.find(s => normName(sellerFullName(s)) === n);
+  if (m) return m;
+  // Last, First format
+  if (n.includes(',')) {
+    const parts = n.split(',').map(x => x.trim());
+    const swapped = parts[1] + ' ' + parts[0];
+    m = state.sellers.find(s => normName(sellerFullName(s)) === swapped);
+    if (m) return m;
+  }
+  // Partial: first name + last name both appear
+  m = state.sellers.find(s => {
+    const fn = normName(s.first), ln = normName(s.last);
+    return n.includes(fn) && n.includes(ln);
+  });
+  if (m) return m;
+  // Partial: last name only (fallback)
+  m = state.sellers.find(s => normName(s.last) === n.split(' ').pop());
+  return m || null;
+}
+
+/* ── Build preview ──────────────────────────────────────────────────── */
+function buildCsvPreview() {
+  const { type, parsed } = csvState;
+  const cols = detectColumns(parsed, type);
+  const el = document.getElementById('csvPreviewContent');
+
+  if (type === 'sfpipe') previewSfPipeline(parsed, cols, el);
+  else if (type === 'sfact') previewSfActivity(parsed, cols, el);
+  else if (type === 'gong') previewGong(parsed, cols, el);
+}
+
+function colTag(name) {
+  return name ? `<span class="badge badge-blue" style="font-size:10px;">${name}</span>` : `<span class="badge badge-red" style="font-size:10px;">not found</span>`;
+}
+
+function previewSfPipeline(rows, cols, el) {
+  // Group by owner
+  const byOwner = {};
+  rows.forEach(r => {
+    const rawOwner = cols.owner ? r[cols.owner] : '';
+    const seller = matchSeller(rawOwner);
+    const key = seller ? seller.id : '__unmatched__' + rawOwner;
+    if (!byOwner[key]) byOwner[key] = { seller, rawName: rawOwner, opps: [] };
+    byOwner[key].opps.push({
+      account: cols.account ? r[cols.account] : (cols.oppName ? r[cols.oppName] : 'Unknown'),
+      stage:   cols.stage  ? r[cols.stage]  : 'Unknown',
+      value:   cols.amount ? parseFloat((r[cols.amount]||'0').replace(/[^0-9.]/g,'')) || 0 : 0,
+      close:   cols.close  ? r[cols.close]  : ''
+    });
+  });
+
+  csvState.preview = { type: 'sfpipe', byOwner, cols };
+
+  const matched   = Object.values(byOwner).filter(o => o.seller).length;
+  const unmatched = Object.values(byOwner).filter(o => !o.seller).length;
+  const totalOpps = rows.length;
+
+  el.innerHTML = `
+    <div class="flex items-center gap-8 mb-16" style="flex-wrap:wrap;">
+      <span class="badge badge-green"><i class="ti ti-check"></i> ${matched} reps matched</span>
+      ${unmatched ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle"></i> ${unmatched} unmatched</span>` : ''}
+      <span class="badge badge-blue">${totalOpps} opportunities</span>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+      Detected columns — Owner: ${colTag(cols.owner)} Account: ${colTag(cols.account)} Stage: ${colTag(cols.stage)} Amount: ${colTag(cols.amount)} Close: ${colTag(cols.close)}
+    </div>
+    <div class="preview-table-wrap">
+      <table>
+        <thead><tr><th>Rep</th><th>Match</th><th>Account</th><th>Stage</th><th>Value</th><th>Close</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,20).map(r => {
+            const rawOwner = cols.owner ? r[cols.owner] : '—';
+            const seller = matchSeller(rawOwner);
+            return `<tr>
+              <td>${rawOwner}</td>
+              <td>${seller ? `<span class="badge badge-green" style="font-size:10px;">${sellerFullName(seller)}</span>` : `<span class="badge badge-red" style="font-size:10px;">no match</span>`}</td>
+              <td>${cols.account ? r[cols.account] : '—'}</td>
+              <td>${cols.stage ? r[cols.stage] : '—'}</td>
+              <td>${cols.amount ? '$' + Number((r[cols.amount]||'0').replace(/[^0-9.]/g,'')||0).toLocaleString() : '—'}</td>
+              <td>${cols.close ? r[cols.close] : '—'}</td>
+            </tr>`;
+          }).join('')}
+          ${rows.length > 20 ? `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);font-style:italic;">…and ${rows.length - 20} more rows</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+      <strong>Note:</strong> Importing will <strong>replace</strong> the existing pipeline for matched reps. Unmatched rows are skipped.
+    </div>
+  `;
+  document.getElementById('csvConfirmLabel').textContent = `Import ${totalOpps} Opportunities`;
+}
+
+function previewSfActivity(rows, cols, el) {
+  const results = rows.map(r => {
+    const rawName = cols.owner ? r[cols.owner] : '';
+    const seller = matchSeller(rawName);
+    return { seller, rawName, r };
+  });
+  const matched = results.filter(x => x.seller).length;
+  csvState.preview = { type: 'sfact', results, cols };
+
+  el.innerHTML = `
+    <div class="flex items-center gap-8 mb-16">
+      <span class="badge badge-green"><i class="ti ti-check"></i> ${matched} reps matched</span>
+      ${matched < results.length ? `<span class="badge badge-amber">${results.length - matched} skipped</span>` : ''}
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+      Detected columns — Rep: ${colTag(cols.owner)} Calls: ${colTag(cols.calls)} Emails: ${colTag(cols.emails)} Meetings: ${colTag(cols.meetings)} Demos: ${colTag(cols.demos)} Quota%: ${colTag(cols.quota)}
+    </div>
+    <div>
+      ${results.map(x => `
+        <div class="match-row">
+          <div class="match-status ${x.seller ? 'ok' : 'warn'}">${x.seller ? '✓' : '?'}</div>
+          <div style="flex:1;font-weight:500;">${x.rawName}</div>
+          <div style="flex:1;color:var(--text-muted);font-size:12px;">${x.seller ? sellerFullName(x.seller) : 'No match — will skip'}</div>
+          <div style="font-size:11px;color:var(--text-muted);">
+            ${cols.calls ? `📞${x.r[cols.calls]||0} ` : ''}
+            ${cols.emails ? `✉${x.r[cols.emails]||0} ` : ''}
+            ${cols.meetings ? `🤝${x.r[cols.meetings]||0}` : ''}
+            ${cols.quota ? ` · ${x.r[cols.quota]||0}% quota` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+      <strong>Note:</strong> Activity metrics will be <strong>updated</strong> for matched reps. Existing values are replaced.
+    </div>
+  `;
+  document.getElementById('csvConfirmLabel').textContent = `Update ${matched} Reps`;
+}
+
+function previewGong(rows, cols, el) {
+  // Group calls by rep
+  const byRep = {};
+  rows.forEach(r => {
+    const rawName = cols.owner ? r[cols.owner] : '';
+    const seller = matchSeller(rawName);
+    const key = seller ? seller.id : '__unmatched__' + rawName;
+    if (!byRep[key]) byRep[key] = { seller, rawName, calls: [] };
+    byRep[key].calls.push({
+      date:      cols.date  ? r[cols.date]  : new Date().toISOString().split('T')[0],
+      score:     cols.score ? parseInt((r[cols.score]||'0').replace(/[^0-9]/g,'')) || 0 : 0,
+      talkRatio: cols.talk  ? parseInt((r[cols.talk]||'0').replace(/[^0-9]/g,'')) || null : null,
+      title:     cols.title ? r[cols.title] : 'Gong Call',
+    });
+  });
+
+  const matched   = Object.values(byRep).filter(o => o.seller).length;
+  const totalCalls = rows.length;
+  csvState.preview = { type: 'gong', byRep, cols };
+
+  el.innerHTML = `
+    <div class="flex items-center gap-8 mb-16">
+      <span class="badge badge-green"><i class="ti ti-check"></i> ${matched} reps matched</span>
+      <span class="badge badge-blue">${totalCalls} calls</span>
+      ${matched < Object.keys(byRep).length ? `<span class="badge badge-amber">${Object.keys(byRep).length - matched} reps unmatched</span>` : ''}
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+      Detected columns — Rep: ${colTag(cols.owner)} Date: ${colTag(cols.date)} Score: ${colTag(cols.score)} Talk Ratio: ${colTag(cols.talk)} Title: ${colTag(cols.title)}
+    </div>
+    <div class="preview-table-wrap">
+      <table>
+        <thead><tr><th>Rep (CSV)</th><th>Match</th><th>Calls</th><th>Avg Score</th><th>Avg Talk %</th></tr></thead>
+        <tbody>
+          ${Object.values(byRep).map(rep => {
+            const scores = rep.calls.map(c => c.score).filter(Boolean);
+            const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : '—';
+            const talks = rep.calls.map(c => c.talkRatio).filter(Boolean);
+            const avgTalk = talks.length ? Math.round(talks.reduce((a,b)=>a+b,0)/talks.length) + '%' : '—';
+            return `<tr>
+              <td>${rep.rawName}</td>
+              <td>${rep.seller ? `<span class="badge badge-green" style="font-size:10px;">${sellerFullName(rep.seller)}</span>` : `<span class="badge badge-red" style="font-size:10px;">no match</span>`}</td>
+              <td>${rep.calls.length}</td>
+              <td>${avgScore}</td>
+              <td>${avgTalk}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+      <strong>Note:</strong> Gong calls will be <strong>appended</strong> to each rep's call history (no duplicates by date+score). Gong score average is recalculated.
+    </div>
+  `;
+  document.getElementById('csvConfirmLabel').textContent = `Import ${totalCalls} Calls`;
+}
+
+/* ── Confirm import ─────────────────────────────────────────────────── */
+function confirmCsvImport() {
+  const { preview } = csvState;
+  if (!preview) return;
+
+  if (preview.type === 'sfpipe') {
+    let count = 0;
+    Object.values(preview.byOwner).forEach(({ seller, opps }) => {
+      if (!seller) return;
+      seller.pipeline = opps.map(o => ({
+        account: o.account,
+        stage:   o.stage,
+        value:   o.value,
+        close:   normaliseDate(o.close)
+      }));
+      count += opps.length;
+    });
+    saveState();
+    closeModal('csvImportModal');
+    showToast(`Pipeline imported: ${count} opportunities ✓`);
+  }
+
+  else if (preview.type === 'sfact') {
+    let count = 0;
+    preview.results.forEach(({ seller, r }) => {
+      if (!seller) return;
+      const cols = preview.cols;
+      if (cols.calls)    seller.calls    = parseInt((r[cols.calls]   ||'0').replace(/[^0-9]/g,'')) || seller.calls;
+      if (cols.emails)   seller.emails   = parseInt((r[cols.emails]  ||'0').replace(/[^0-9]/g,'')) || seller.emails;
+      if (cols.meetings) seller.meetings = parseInt((r[cols.meetings]||'0').replace(/[^0-9]/g,'')) || seller.meetings;
+      if (cols.demos)    seller.demos    = parseInt((r[cols.demos]   ||'0').replace(/[^0-9]/g,'')) || seller.demos;
+      if (cols.quota)    seller.quota    = parseInt((r[cols.quota]   ||'0').replace(/[^0-9.]/g,'')) || seller.quota;
+      count++;
+    });
+    saveState();
+    renderSidebar();
+    closeModal('csvImportModal');
+    showToast(`Activity metrics updated for ${count} reps ✓`);
+  }
+
+  else if (preview.type === 'gong') {
+    let callCount = 0;
+    Object.values(preview.byRep).forEach(({ seller, calls }) => {
+      if (!seller) return;
+      if (!seller.gongCalls) seller.gongCalls = [];
+      calls.forEach(c => {
+        // Dedupe by date + score
+        const exists = seller.gongCalls.some(x => x.date === c.date && x.score === c.score && x.title === c.title);
+        if (!exists) {
+          seller.gongCalls.push({
+            id: 'call_csv_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+            date: normaliseDate(c.date),
+            focus: 'Imported',
+            score: c.score,
+            talkRatio: c.talkRatio,
+            title: c.title,
+            moments: [],
+            recommendation: '',
+            ts: Date.now()
+          });
+          callCount++;
+        }
+      });
+      // Recalculate rolling Gong score
+      const allScores = seller.gongCalls.map(c => c.score).filter(Boolean);
+      if (allScores.length) seller.gong = Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+    });
+    saveState();
+    renderSidebar();
+    closeModal('csvImportModal');
+    showToast(`${callCount} Gong calls imported ✓`);
+  }
+
+  // Refresh current view
+  if (state.currentSellerId && document.getElementById('view-seller').classList.contains('active')) {
+    renderSellerProfile(state.currentSellerId);
+  } else {
+    renderDashboard();
+  }
+}
+
+/* ── Date normaliser (handles DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD etc) ─ */
+function normaliseDate(str) {
+  if (!str) return '';
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.split('T')[0];
+  // DD/MM/YYYY
+  const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  // MM/DD/YYYY (US)
+  const mdy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (mdy) return `${mdy[3]}-${mdy[1].padStart(2,'0')}-${mdy[2].padStart(2,'0')}`;
+  // Try native parse as fallback
+  const d = new Date(str);
+  if (!isNaN(d)) return d.toISOString().split('T')[0];
+  return str;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════════════ */
+function init() {
+  loadState();
+  renderSidebar();
+  renderDashboard();
+  loadGleanCreds();
+  // Pre-fill API key modal with existing key
+  if (state.apiKey) {
+    const el = document.getElementById('apiKeyInput');
+    if (el) el.value = state.apiKey;
+  } else if (!localStorage.getItem('xero_coaching_welcomed')) {
+    localStorage.setItem('xero_coaching_welcomed', '1');
+    setTimeout(() => showToast('Demo data loaded — add your own team, or set API keys (sidebar) to enable AI features'), 900);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
