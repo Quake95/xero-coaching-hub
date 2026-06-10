@@ -1310,7 +1310,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 /* ═══════════════════════════════════════════════════════════════════════
    DATA LAYER
 ═══════════════════════════════════════════════════════════════════════ */
-const STORAGE_KEY = 'xero_coaching_v2';
+const STORAGE_KEY = 'xero_coaching_v4'; // bumped so the real-data seed replaces any cached demo data
 const AVATARS_COLORS = ['#1AB4D7','#8b5cf6','#22c55e','#f59e0b','#ef4444','#ec4899','#0ea5e9','#14b8a6'];
 
 let state = {
@@ -1341,164 +1341,177 @@ function saveState() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SEED DATA — 5 sample AEs
+   SEED DATA — Real VIC/TAS team data
+   Synced from Glean (Gong calls + Salesforce via Drive docs) on 10 Jun 2026.
+   - Quota % = Q4 FY26 gross org revenue attainment (AU Partner Quarterly Deck | Field Sales Vic/Tas). Syarna + Tom: no Q4 data (extended leave).
+   - Pipeline = live rows from "AU Partner | Overdue Opps" sheet + opportunity names attached to recent Gong calls (stage "Open" = stage not yet confirmed in SF).
+   - Gong call scores are 0 until analysed (paste a transcript into AI call analysis, or connect API keys).
+   - Capability ratings and GROW plans left blank for manager input.
 ═══════════════════════════════════════════════════════════════════════ */
 function seedData() {
-  const now = Date.now();
-  const d = n => new Date(now - 86400000 * n).toISOString().split('T')[0];
+  const ts = s => new Date(s).getTime();
   state.sellers = [
-    makeSeller('Alex', 'Tran', 'VIC Partner Sales', '#1AB4D7', {
-      quota: 82, gong: 74, calls: 58, emails: 150, meetings: 22, opps: 15, demos: 12,
-      capabilities: { 'Customer Focused':4,'Ensures Accountability':3,'Action Oriented':4,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+
+    makeSeller('Harvey', 'Patterson', 'Partner Sales Manager — VIC/TAS', '#14b8a6', {
+      quota: 0, gong: 0, calls: 6, emails: 0, meetings: 0, opps: 5, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Brightline Accounting', stage:'Proposal', value:3400, close:d(-20) },
-        { account:'Harbourview Partners', stage:'Demo / Eval', value:2200, close:d(-35) },
-        { account:'Cedar & Birch Advisory', stage:'Closed Won', value:1800, close:d(12) },
-        { account:'Northgate Tax Co', stage:'Discovery', value:2600, close:d(-50) }
+        { account:'Philip J. Eddy & Partners', stage:'Open', value:0, close:'' },
+        { account:'Forvis Mazars Australia - Melbourne', stage:'Open', value:0, close:'' },
+        { account:'SBM Stavros', stage:'Open', value:0, close:'' },
+        { account:'Lewis Maxwell', stage:'Open', value:0, close:'' },
+        { account:'LSKS', stage:'Open', value:0, close:'' }
       ],
       gongCalls: [
-        { id:'gc_at1', date:d(3), focus:'Imported', score:76, talkRatio:49, title:'Brightline Accounting — proposal walkthrough', moments:[], recommendation:'', ts: now - 86400000*3 },
-        { id:'gc_at2', date:d(9), focus:'Imported', score:71, talkRatio:55, title:'Harbourview Partners — practice management demo', moments:[], recommendation:'', ts: now - 86400000*9 }
+        { id:'glean_hp1', date:'2026-06-02', focus:'Imported from Glean', score:0, talkRatio:null, title:'Forvis Mazars (Michael George) — payday super list, 28-client BE quick win', moments:[], recommendation:'', ts: ts('2026-06-02'), gleanUrl:'https://us-103240.app.gong.io/call?id=5032007199156374448' },
+        { id:'glean_hp2', date:'2026-06-01', focus:'Imported from Glean', score:0, talkRatio:null, title:'N.S Accounting & Advisory — tax planning webinar follow-up + payday super report', moments:[], recommendation:'', ts: ts('2026-06-01'), gleanUrl:'https://us-103240.app.gong.io/call?id=315073387115420599' },
+        { id:'glean_hp3', date:'2026-06-01', focus:'Imported from Glean', score:0, talkRatio:null, title:'AC Accounting & Business Solutions (Ballarat) — webinar + payday super follow-up', moments:[], recommendation:'', ts: ts('2026-06-01'), gleanUrl:'https://us-103240.app.gong.io/call?id=9122650823759092953' },
+        { id:'glean_hp4', date:'2026-06-01', focus:'Imported from Glean', score:0, talkRatio:null, title:'Hatcher Advisory — webinar follow-up, payday super report offer', moments:[], recommendation:'', ts: ts('2026-06-01'), gleanUrl:'https://us-103240.app.gong.io/call?id=8499262921105138216' },
+        { id:'glean_hp5', date:'2026-06-01', focus:'Imported from Glean', score:0, talkRatio:null, title:'Kelly + Partners Bendigo — client file move follow-up', moments:[], recommendation:'', ts: ts('2026-06-01'), gleanUrl:'https://us-103240.app.gong.io/call?id=5417881327853951745' },
+        { id:'glean_hp6', date:'2026-05-28', focus:'Imported from Glean', score:0, talkRatio:null, title:'KW Grimes & Associates — new AM intro, May discount codes', moments:[], recommendation:'', ts: ts('2026-05-28'), gleanUrl:'https://us-103240.app.gong.io/call?id=6775018976401475706' }
       ],
       notes: [
-        { id:'n_at1', date:d(8), type:'1:1 Coaching', body:'Alex is tracking well this quarter. Cedar & Birch closed cleanly on value — no concessions. Brightline proposal is out; partner is engaged but wants a phased migration plan before signing.\n\nStrengths: discovery quality, partner rapport, structured proposals.\nDevelopment: tightening next steps at end of demos, multi-threading larger firms.', ts: now - 86400000*8 }
+        { id:'n_hp1', date:'2026-06-10', type:'Glean Sync', body:'Manager with own patch — no individual attainment slide in the Q4 FY26 deck, so quota shows 0 (not a performance signal). Relatively new to the patch (per KW Grimes intro call).\n\nJune motion: payday super outreach across the book — Forvis Mazars 28-client BE quick-win list is the standout, plus webinar follow-ups (N.S Accounting, AC Accounting, Hatcher).\n\nKey dates: Philip J. Eddy & Partners HandiSoft flip meeting 21 June (2,800 clients), SBM Stavros next step 5 July, 13-account handover to James on 1 July.', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Close Brightline and Harbourview this quarter and finish above 90% attainment',
-        reality: 'At 82% with two late-stage deals. Both partners engaged but need migration confidence to commit.',
-        options: '1. Build a phased rollout plan for Brightline\n2. Run a working session with Harbourview ops lead\n3. Use the change readiness scorecard in discovery',
-        will: 'Send Brightline the phased plan this week. Book Harbourview working session by Friday.',
-        capFocus: 'Plans & Aligns', gongSkill: 'Next Steps',
-        strengths: 'Discovery quality, partner rapport, proposal structure',
-        development: 'Next-steps discipline, multi-threading',
-        accountability: 'Weekly pipeline review. Brightline plan sent by end of week.'
-      }
+      grow: {}
     }),
-    makeSeller('Morgan', 'Reid', 'VIC Partner Sales', '#8b5cf6', {
-      quota: 95, gong: 81, calls: 66, emails: 175, meetings: 27, opps: 19, demos: 16,
-      capabilities: { 'Customer Focused':4,'Ensures Accountability':4,'Action Oriented':4,'Plans & Aligns':4,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+
+    makeSeller('Caitlin', 'Barker', 'VIC/TAS Senior AE (SAM 4)', '#1AB4D7', {
+      quota: 111, gong: 0, calls: 6, emails: 0, meetings: 0, opps: 6, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Summit Ridge Partners', stage:'Negotiation', value:4200, close:d(-15) },
-        { account:'Clearwater Advisory', stage:'Proposal', value:2800, close:d(-25) },
-        { account:'Old Mill Accountants', stage:'Closed Won', value:2100, close:d(30) },
-        { account:'Beacon Bay Tax', stage:'Discovery', value:1900, close:d(-55) }
+        { account:'Billings and Eliis', stage:'Propose', value:11000, close:'2025-08-22' },
+        { account:'TWB Pty Ltd', stage:'Demonstrate', value:2750, close:'2026-01-31' },
+        { account:'Wizard Accounting (Vic) Pty Ltd', stage:'Commit', value:350, close:'2026-02-06' },
+        { account:'SSK Accountants Pty Ltd', stage:'Identify', value:0, close:'2026-02-06' },
+        { account:'Elixir Wealth Advisory', stage:'Demonstrate', value:0, close:'2025-11-30' },
+        { account:'Prime Financial Group Ltd', stage:'Demonstrate', value:0, close:'2025-06-30' }
       ],
       gongCalls: [
-        { id:'gc_mr1', date:d(2), focus:'Imported', score:83, talkRatio:46, title:'Summit Ridge — commercial terms discussion', moments:[], recommendation:'', ts: now - 86400000*2 },
-        { id:'gc_mr2', date:d(6), focus:'Imported', score:79, talkRatio:51, title:'Clearwater Advisory — partner alignment call', moments:[], recommendation:'', ts: now - 86400000*6 }
+        { id:'glean_cb1', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Call with Joshua Colman (SY Group)', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=735781700758787748' },
+        { id:'glean_cb2', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Elixir Wealth Advisory — XPM opp follow-up', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=9063358815314971863' },
+        { id:'glean_cb3', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Southern Partners — BEs / Ledgers from MYOB / Tax Conversion', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=6168828958422635317' },
+        { id:'glean_cb4', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Green & Sternfeld — partner promo / bulk codes education', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=7603135524515023825' },
+        { id:'glean_cb5', date:'2026-06-05', focus:'Imported from Glean', score:0, talkRatio:null, title:'Jeremy Curtis & Associates — MYOB to Xero conversion (JetConvert)', moments:[], recommendation:'', ts: ts('2026-06-05'), gleanUrl:'https://us-103240.app.gong.io/call?id=2773413102160155902' },
+        { id:'glean_cb6', date:'2026-06-05', focus:'Imported from Glean', score:0, talkRatio:null, title:'Bruce Edmunds / Maximum Business Solutions — 10-file business plan', moments:[], recommendation:'', ts: ts('2026-06-05'), gleanUrl:'https://us-103240.app.gong.io/call?id=94710719506611686' }
       ],
       notes: [
-        { id:'n_mr1', date:d(12), type:'1:1 Coaching', body:'Morgan is the team pacesetter this quarter. Old Mill closed ahead of schedule. Summit Ridge is in negotiation — holding firm on 12-month terms and the partner respects the structure.\n\nStrengths: commercial confidence, deal control, pipeline discipline.\nDevelopment: delegating smaller deals, coaching peers on negotiation technique.', ts: now - 86400000*12 }
+        { id:'n_cb1', date:'2026-06-10', type:'Glean Sync', body:'Q4 FY26 attainment 111% ($12,998 closed won, $2,467 open pipeline, 6 opps). Biggest open deal: Billings and Eliis XPM at $11k, sitting in Propose since Aug — needs a decision push.\n\nJune activity is heavy on EOFY conversions: Maximum Business Solutions 10-file business plan (90% off / 5 months + JetConvert), Jeremy Curtis MYOB conversion, Southern Partners multi-opp.\n\nDeals desk: asked to share her multi-entity deal negotiation slides with the team. Recognised as the Payday Super pioneer and owner of the Planning the Change BE activation framework.', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Land Summit Ridge at full value and finish the quarter above 110%',
-        reality: 'At 95% with strong late-stage coverage. Negotiation is the watch point — partner pushing on price.',
-        options: '1. Anchor on phased delivery value, not discount\n2. Bring in a customer reference firm\n3. Walk through the mutual action plan with the partner',
-        will: 'Reference call booked this week. MAP shared before next negotiation session.',
-        capFocus: 'Ensures Accountability', gongSkill: 'Pricing',
-        strengths: 'Commercial confidence, deal control, pipeline discipline',
-        development: 'Peer coaching, delegation',
-        accountability: 'Negotiation debrief after each Summit Ridge call.'
-      }
+      grow: {}
     }),
-    makeSeller('Priya', 'Sharma', 'VIC/TAS Partner Sales', '#22c55e', {
-      quota: 71, gong: 69, calls: 51, emails: 138, meetings: 19, opps: 13, demos: 10,
-      capabilities: { 'Customer Focused':4,'Ensures Accountability':3,'Action Oriented':3,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':3,'Domain Expertise':3 },
+
+    makeSeller('Courtney-Sue', 'Robertson', 'VIC AE', '#8b5cf6', {
+      quota: 118, gong: 0, calls: 6, emails: 0, meetings: 0, opps: 8, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Gumtree Accounting', stage:'Demo / Eval', value:2400, close:d(-22) },
-        { account:'Coastal Edge Advisory', stage:'Discovery', value:1700, close:d(-48) },
-        { account:'Stonebridge Partners', stage:'Proposal', value:2900, close:d(-18) }
+        { account:'VERVE SOLUTION PTY LTD', stage:'Open', value:0, close:'' },
+        { account:'Gartly & Associates', stage:'Open', value:0, close:'' },
+        { account:'THE TRUSTEE FOR NGA PRIVATE TRUST', stage:'Open', value:0, close:'' },
+        { account:'6 Point Advisory Pty Ltd', stage:'Open', value:0, close:'' },
+        { account:'The Trustee for Creswick Charter Trust', stage:'Identify', value:0, close:'2025-10-08' }
       ],
       gongCalls: [
-        { id:'gc_ps1', date:d(4), focus:'Imported', score:70, talkRatio:58, title:'Gumtree Accounting — workflow demo', moments:[], recommendation:'', ts: now - 86400000*4 }
+        { id:'glean_cs1', date:'2026-06-02', focus:'Imported from Glean', score:0, talkRatio:null, title:'KPG Taxation Shepparton / Verve Solution — flip proposal pre-leave wrap-up', moments:[], recommendation:'', ts: ts('2026-06-02'), gleanUrl:'https://us-103240.app.gong.io/call?id=1020177968606677965' },
+        { id:'glean_cs2', date:'2026-06-02', focus:'Imported from Glean', score:0, talkRatio:null, title:'Gartly & Associates — flip, next step booking', moments:[], recommendation:'', ts: ts('2026-06-02'), gleanUrl:'https://us-103240.app.gong.io/call?id=797688765056104158' },
+        { id:'glean_cs3', date:'2026-06-02', focus:'Imported from Glean', score:0, talkRatio:null, title:'Savige Accounting — June promo + AML changes check-in', moments:[], recommendation:'', ts: ts('2026-06-02'), gleanUrl:'https://us-103240.app.gong.io/call?id=8565916270899317110' },
+        { id:'glean_cs4', date:'2026-06-02', focus:'Imported from Glean', score:0, talkRatio:null, title:'NGA Private Trust / Lombardi — ledgers list + implementation booking', moments:[], recommendation:'', ts: ts('2026-06-02'), gleanUrl:'https://us-103240.app.gong.io/call?id=5701415042139196453' },
+        { id:'glean_cs5', date:'2026-06-01', focus:'Imported from Glean', score:0, talkRatio:null, title:'Capital E Bookkeeping — new file setups + promo codes', moments:[], recommendation:'', ts: ts('2026-06-01'), gleanUrl:'https://us-103240.app.gong.io/call?id=4532877673231382253' },
+        { id:'glean_cs6', date:'2026-05-27', focus:'Imported from Glean', score:0, talkRatio:null, title:'6 Point Advisory — workpapers training session booking', moments:[], recommendation:'', ts: ts('2026-05-27'), gleanUrl:'https://us-103240.app.gong.io/call?id=2596702471329265486' }
       ],
       notes: [
-        { id:'n_ps1', date:d(10), type:'1:1 Coaching', body:'Priya covers a wide patch and her forecasting is reliable. Stonebridge proposal is solid but the demo-to-proposal conversion window is stretching — partners go quiet after demos.\n\nStrengths: territory coverage, reliable forecasting, customer empathy.\nDevelopment: locking next steps before ending demos, creating urgency in late stage.', ts: now - 86400000*10 }
+        { id:'n_cs1', date:'2026-06-10', type:'Glean Sync', body:'Q4 FY26 attainment 118% — top of team ($3,632 closed won, $2,174 open pipeline, 8 opps).\n\nOn leave (US) from 3 June, ~2 weeks. James and Lauren covering the patch. Pre-leave wrap-up was disciplined: Verve Solution flip proposal out for signature (1 July go-live target), NGA Private Trust ledgers implementation meeting handed to Vicky + James, 6 Point Advisory workpapers session locked in with the partner consultant.\n\nFollow up on return: confirm Verve signature landed and Gartly subscription-list meeting happened (James booked it for Fri 19 June).', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Convert Stonebridge and Gumtree by quarter end and lift attainment above 85%',
-        reality: 'At 71% with mid-stage pipeline. Demos go well but commitment stalls afterwards.',
-        options: '1. Trial-close technique on next two demos\n2. End every demo with a booked next meeting\n3. Use before/after workflow diagrams to build urgency',
-        will: 'Next two demos end with a scheduled follow-up on the spot.',
-        capFocus: 'Consultative Selling', gongSkill: 'Next Steps',
-        strengths: 'Territory coverage, forecasting, empathy',
-        development: 'Closing confidence, urgency in late-stage deals',
-        accountability: 'Post-demo debrief with manager for the next month.'
-      }
+      grow: {}
     }),
-    makeSeller('Jack', 'Holloway', 'VIC Partner Sales', '#f59e0b', {
-      quota: 64, gong: 66, calls: 47, emails: 120, meetings: 17, opps: 11, demos: 8,
-      capabilities: { 'Customer Focused':3,'Ensures Accountability':3,'Action Oriented':3,'Plans & Aligns':2,'Sells Like a Xero':3,'Consultative Selling':3,'Domain Expertise':2 },
+
+    makeSeller('James', 'Figliola', 'VIC AE', '#22c55e', {
+      quota: 105, gong: 0, calls: 6, emails: 0, meetings: 0, opps: 8, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Riverbend Bookkeeping', stage:'Discovery', value:1400, close:d(-40) },
-        { account:'Fern + Field Advisory', stage:'Demo / Eval', value:1900, close:d(-30) },
-        { account:'Lakeside Tax Group', stage:'Prospecting', value:1100, close:d(-65) }
+        { account:'Cirenala Chartered Accountant', stage:'Open', value:0, close:'' },
+        { account:'TM and JK Partners Pty Ltd', stage:'Open', value:0, close:'' },
+        { account:'Stable Financial', stage:'Open', value:0, close:'' },
+        { account:'ML Accounting', stage:'Open', value:0, close:'' },
+        { account:'Davern & Co', stage:'Open', value:0, close:'' },
+        { account:'Spadaro & Associates', stage:'Open', value:0, close:'' },
+        { account:'Deryan Financial Group', stage:'Open', value:0, close:'' },
+        { account:'Certum Accountants Australia Pty Ltd', stage:'Identify', value:0, close:'2025-03-31' }
       ],
       gongCalls: [
-        { id:'gc_jh1', date:d(5), focus:'Imported', score:64, talkRatio:63, title:'Fern + Field — discovery call', moments:[], recommendation:'', ts: now - 86400000*5 }
+        { id:'glean_jf1', date:'2026-06-10', focus:'Imported from Glean', score:0, talkRatio:null, title:'Cirenala & Xero — bank rec / auto-reconcile working session (5BE opp)', moments:[], recommendation:'', ts: ts('2026-06-10'), gleanUrl:'https://us-103240.app.gong.io/call?id=7676512277043695352' },
+        { id:'glean_jf2', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Gartly & Associates — covering Courtney, subscription list meeting booked', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=6678077188043960955' },
+        { id:'glean_jf3', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Stable Financial — implementation meeting booking (flip)', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=6683984903911962754' },
+        { id:'glean_jf4', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Spadaro & Associates — tax conversion training (with IC Michael)', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=3796291077770015111' },
+        { id:'glean_jf5', date:'2026-06-08', focus:'Imported from Glean', score:0, talkRatio:null, title:'TM and JK Partners — discovery, flip from CatSoft (new partner)', moments:[], recommendation:'', ts: ts('2026-06-08'), gleanUrl:'https://us-103240.app.gong.io/call?id=50634891589724653' },
+        { id:'glean_jf6', date:'2026-06-03', focus:'Imported from Glean', score:0, talkRatio:null, title:'Davern & Co — MYOB AE flip, billing fix + business plan next steps', moments:[], recommendation:'', ts: ts('2026-06-03'), gleanUrl:'https://us-103240.app.gong.io/call?id=2398036950012998107' }
       ],
       notes: [
-        { id:'n_jh1', date:d(14), type:'1:1 Coaching', body:'Jack is in his first full year and building good habits. Talk ratio on recent calls is running high — talking past the close and over-explaining features.\n\nStrengths: product enthusiasm, work ethic, coachability.\nDevelopment: listening ratio, question-led discovery, structured call planning.', ts: now - 86400000*14 }
+        { id:'n_jf1', date:'2026-06-10', type:'Glean Sync', body:'Q4 FY26 attainment 105% ($4,059 closed won, $3,289 open pipeline, 8 opps).\n\nBusiest live pipeline on the team right now: Cirenala 5BE (working sessions running), TM and JK Partners CatSoft flip (strong discovery — compliance pain, digital signatures), Stable Financial implementation, ML Accounting demo + handy tax migration, Davern & Co MYOB AE flip moving to data team.\n\nAlso covering Courtney-Sue while she is on leave, and in Tassie next week. Receiving a 13-account handover from Harvey on 1 July incl. Philip J. Eddy & Partners (HandiSoft flip, 2,800 clients, meeting 21 June) — watch capacity.', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Build a consistent discovery rhythm and bring talk ratio under 55%',
-        reality: 'At 64% with an early-stage pipeline. Calls are energetic but rep-dominated.',
-        options: '1. Pre-write three open questions per call\n2. Review one call recording per week together\n3. Shadow a senior AE on two discovery calls',
-        will: 'Call plan template used on every discovery call this month.',
-        capFocus: 'Plans & Aligns', gongSkill: 'Discovery',
-        strengths: 'Enthusiasm, work ethic, coachability',
-        development: 'Listening ratio, question-led discovery',
-        accountability: 'Weekly call review in 1:1.'
-      }
+      grow: {}
     }),
-    makeSeller('Sofia', 'Marino', 'TAS Partner Sales', '#ec4899', {
-      quota: 88, gong: 77, calls: 60, emails: 162, meetings: 24, opps: 16, demos: 14,
-      capabilities: { 'Customer Focused':4,'Ensures Accountability':4,'Action Oriented':4,'Plans & Aligns':3,'Sells Like a Xero':4,'Consultative Selling':4,'Domain Expertise':3 },
+
+    makeSeller('Kaitlin', 'Graystone', 'TAS AE', '#f59e0b', {
+      quota: 76, gong: 0, calls: 6, emails: 0, meetings: 0, opps: 4, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Huon Valley Accountants', stage:'Negotiation', value:3100, close:d(-12) },
-        { account:'Derwent & Co', stage:'Closed Won', value:2500, close:d(25) },
-        { account:'Bass Strait Advisory', stage:'Demo / Eval', value:2000, close:d(-38) }
+        { account:'BRM Private Clients Pty Ltd', stage:'Propose', value:1650, close:'2025-07-31' },
+        { account:'Zilch Bookwork', stage:'Propose', value:0, close:'2025-09-26' },
+        { account:'Camtech & Slater', stage:'Identify', value:0, close:'2025-12-06' },
+        { account:'Camtech & Slater', stage:'Identify', value:0, close:'2025-11-28' }
       ],
       gongCalls: [
-        { id:'gc_sm1', date:d(1), focus:'Imported', score:78, talkRatio:50, title:'Huon Valley — migration sequencing call', moments:[], recommendation:'', ts: now - 86400000*1 },
-        { id:'gc_sm2', date:d(7), focus:'Imported', score:75, talkRatio:53, title:'Bass Strait Advisory — ecosystem walkthrough', moments:[], recommendation:'', ts: now - 86400000*7 }
+        { id:'glean_kg1', date:'2026-06-10', focus:'Imported from Glean', score:0, talkRatio:null, title:'XPM scoping — micro practice time & billing (referred to IC)', moments:[], recommendation:'', ts: ts('2026-06-10'), gleanUrl:'https://us-103240.app.gong.io/call?id=592094714647186950' },
+        { id:'glean_kg2', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Parker Accounting (Launceston) — Tassie trip coffee booked Tue 16th', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=7402839105530207843' },
+        { id:'glean_kg3', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Pulse Business Services (Hobart) — catch-up booked Fri 11am', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=8995478861265079901' },
+        { id:'glean_kg4', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Lorkin Delpero Harris — Tassie trip meeting tentative Wed 2pm', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=7985296260090343374' },
+        { id:'glean_kg5', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'HandiSoft workflow demo confirmed — full end-to-end run-through next week', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=477176574726931402' },
+        { id:'glean_kg6', date:'2026-06-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Findex Hobart — outreach for Tassie trip (email follow-up)', moments:[], recommendation:'', ts: ts('2026-06-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=2920451118442032372' }
       ],
       notes: [
-        { id:'n_sm1', date:d(6), type:'1:1 Coaching', body:'Sofia owns the TAS patch end-to-end. Derwent & Co closed on a clean phased rollout story. Huon Valley negotiation is about staff change fear, not price — she is handling it well with the resistance playbook.\n\nStrengths: change management framing, trust building, regional relationships.\nDevelopment: pipeline depth beyond the top three accounts.', ts: now - 86400000*6 }
+        { id:'n_kg1', date:'2026-06-10', type:'Glean Sync', body:'Q4 FY26 attainment 76% ($32,216 actual vs $42,522 target) — below target but the biggest absolute book on the team.\n\nStrong prospecting rhythm this week building the Tassie trip (15–19 June): Launceston Tuesday (Parker Accounting, Preece), Hobart Wed–Fri (LDH, Pulse, Findex), plus a confirmed 90-min HandiSoft end-to-end workflow demo with Luke and Hayley.\n\nCoaching angle: pipeline is thin on committed value (BRM $1,650 in Propose is the only valued open deal) — convert next week of meetings into staged opportunities.', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Close Huon Valley and add four new qualified opportunities this quarter',
-        reality: 'At 88% with thin early-stage pipeline behind the current deals.',
-        options: '1. Run a regional partner event in Hobart\n2. Re-engage dormant accounts from last quarter\n3. Block two prospecting mornings per week',
-        will: 'Prospecting blocks in calendar from Monday. Event proposal drafted this week.',
-        capFocus: 'Action Oriented', gongSkill: 'Discovery',
-        strengths: 'Change framing, trust building, regional network',
-        development: 'Pipeline depth, prospecting consistency',
-        accountability: 'Four new qualified opps by end of month.'
-      }
+      grow: {}
     }),
-    makeSeller('Liam', 'Carter', 'VIC Partner Sales', '#0ea5e9', {
-      quota: 55, gong: 62, calls: 38, emails: 96, meetings: 13, opps: 8, demos: 6,
-      capabilities: { 'Customer Focused':3,'Ensures Accountability':2,'Action Oriented':3,'Plans & Aligns':2,'Sells Like a Xero':3,'Consultative Selling':2,'Domain Expertise':2 },
+
+    makeSeller('Syarna', 'Gilmour', 'TAS Account Manager', '#ec4899', {
+      quota: 0, gong: 0, calls: 4, emails: 0, meetings: 0, opps: 1, demos: 0,
+      capabilities: {},
       pipeline: [
-        { account:'Wattle Grove Bookkeeping', stage:'Discovery', value:900, close:d(-45) },
-        { account:'Eastbrook Partners', stage:'Prospecting', value:1300, close:d(-70) }
+        { account:'East Coast Tax Accounting', stage:'Discover', value:0, close:'2025-10-09' }
       ],
-      gongCalls: [],
+      gongCalls: [
+        { id:'glean_sg1', date:'2025-11-21', focus:'Imported from Glean', score:0, talkRatio:null, title:'John N Williams — flip opp, FYI Docs intro follow-up', moments:[], recommendation:'', ts: ts('2025-11-21'), gleanUrl:'https://us-103240.app.gong.io/call?id=6375333282345090014' },
+        { id:'glean_sg2', date:'2025-11-19', focus:'Imported from Glean', score:0, talkRatio:null, title:'R&K Taxation Experts — make firm 100% Xero, subscription spreadsheet', moments:[], recommendation:'', ts: ts('2025-11-19'), gleanUrl:'https://us-103240.app.gong.io/call?id=7145781059702965278' },
+        { id:'glean_sg3', date:'2025-11-19', focus:'Imported from Glean', score:0, talkRatio:null, title:'Accountsloop — BE load / win-over-clients opps, training session', moments:[], recommendation:'', ts: ts('2025-11-19'), gleanUrl:'https://us-103240.app.gong.io/call?id=3793060742228080638' },
+        { id:'glean_sg4', date:'2025-11-18', focus:'Imported from Glean', score:0, talkRatio:null, title:'Kelly & Associates — flip opp, meeting outreach', moments:[], recommendation:'', ts: ts('2025-11-18'), gleanUrl:'https://us-103240.app.gong.io/call?id=6523646474382633297' }
+      ],
       notes: [
-        { id:'n_lc1', date:d(18), type:'1:1 Coaching', body:'Liam joined the team mid-quarter and is ramping on a starter patch. Activity is building week over week and he is picking up the playbook quickly.\n\nStrengths: product knowledge, customer empathy, steady under pressure.\nDevelopment: activity consistency, pipeline reactivation, CRM hygiene after the break.', ts: now - 86400000*18 }
+        { id:'n_sg1', date:'2026-06-10', type:'Glean Sync', body:'On extended leave — last Gong activity 21 Nov 2025; no Q4 FY26 attainment data in the quarterly deck (quota shown as 0, not a performance signal).\n\nPre-leave focus: R&K Taxation Experts (make firm 100% Xero), Accountsloop BE load + win-over-clients, John N Williams and Kelly & Associates flips. Kelly & Associates was subsequently progressed by Tom Cooney in December.\n\nOpen SF item: East Coast Tax Accounting tax onboarding (Discover, overdue close date).', ts: ts('2026-06-10') }
       ],
-      grow: {
-        goal: 'Be fully ramped with five active opportunities by end of quarter',
-        reality: 'At 55% on a new-starter ramp plan. Two active opps; the rest of the patch is untouched whitespace.',
-        options: '1. Build a target list of 20 firms in the patch\n2. Book intro calls with the top five\n3. Shadow two calls with a senior AE',
-        will: 'CRM clean-up done this week. Five reactivation calls booked.',
-        capFocus: 'Action Oriented', gongSkill: 'Discovery',
-        strengths: 'Product knowledge, empathy, composure',
-        development: 'New-starter ramp, prospecting rhythm',
-        accountability: 'Weekly ramp check-in with manager.'
-      }
+      grow: {}
+    }),
+
+    makeSeller('Thomas', 'Cooney', 'VIC/TAS Account Manager (1P AM 3)', '#0ea5e9', {
+      quota: 0, gong: 0, calls: 4, emails: 0, meetings: 0, opps: 2, demos: 0,
+      capabilities: {},
+      pipeline: [
+        { account:'Badawy Large & Powers Pty. Ltd.', stage:'Discover', value:2200, close:'2025-06-17' },
+        { account:'Connectus Accountants', stage:'Discover', value:0, close:'2025-08-19' }
+      ],
+      gongCalls: [
+        { id:'glean_tc1', date:'2025-12-17', focus:'Imported from Glean', score:0, talkRatio:null, title:'Kelly & Associates — post-demo follow-up with Ambrose', moments:[], recommendation:'', ts: ts('2025-12-17'), gleanUrl:'https://us-103240.app.gong.io/call?id=6541893257556697964' },
+        { id:'glean_tc2', date:'2025-12-16', focus:'Imported from Glean', score:0, talkRatio:null, title:'Kelly & Associates — demo logistics (Contract 20251202 + flip opp)', moments:[], recommendation:'', ts: ts('2025-12-16'), gleanUrl:'https://us-103240.app.gong.io/call?id=5020762272990154709' },
+        { id:'glean_tc3', date:'2025-12-14', focus:'Imported from Glean', score:0, talkRatio:null, title:'David Kew & Associates — callback follow-up', moments:[], recommendation:'', ts: ts('2025-12-14'), gleanUrl:'https://us-103240.app.gong.io/call?id=3944462235598186822' },
+        { id:'glean_tc4', date:'2025-12-09', focus:'Imported from Glean', score:0, talkRatio:null, title:'Buckley Business Solutions — permanent promo codes approved', moments:[], recommendation:'', ts: ts('2025-12-09'), gleanUrl:'https://us-103240.app.gong.io/call?id=7060816363103968729' }
+      ],
+      notes: [
+        { id:'n_tc1', date:'2026-06-10', type:'Glean Sync', body:'On leave — last Gong activity 17 Dec 2025; no Q4 FY26 attainment data (quota shown as 0, not a performance signal). Per Courtney on a 2 June call, Tom is back for a few days this month.\n\nDecember run-rate was solid: Kelly & Associates moved from flip opp to contract + demo, Buckley Business Solutions promo codes approved.\n\nOpen SF items: Badawy Large & Powers tax conversion ($2,200, Discover, close date overdue 17 Jun 2025) and Connectus Accountants XPM implementation. Handover sheet flags Vertigan Partners as effectively closed (acquired by MDH). ITP TAS reassigned to Tom in the territory plan.', ts: ts('2026-06-10') }
+      ],
+      grow: {}
     })
+
   ];
   saveState();
 }
