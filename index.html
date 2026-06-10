@@ -1125,6 +1125,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         Meeting Prep
         <span class="nav-item-badge">AI</span>
       </div>
+      <a class="nav-item" href="map.html">
+        <i class="ti ti-map-check"></i>
+        MAP Builder
+        <span class="nav-item-badge" style="background:var(--green);">NEW</span>
+      </a>
     </div>
 
     <div class="sidebar-section">
@@ -1167,6 +1172,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       </button>
       <button class="sidebar-footer-btn" onclick="openGleanSync(null)" style="color:#f59e0b;">
         <i class="ti ti-refresh"></i> Sync from Glean
+      </button>
+      <button class="sidebar-footer-btn" onclick="copyClaudePrompt()" style="color:#8b5cf6;">
+        <i class="ti ti-message-chatbot"></i> Claude Sync Prompt
       </button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -1988,7 +1996,10 @@ function buildSalesforceTab(s) {
       <td><span class="stage-badge" style="background:${stageColors[opp.stage]||'#94a3b8'}22;color:${stageColors[opp.stage]||'#94a3b8'}">${opp.stage}</span></td>
       <td>$${Number(opp.value||0).toLocaleString()}</td>
       <td>${opp.close}</td>
-      <td>
+      <td style="white-space:nowrap;">
+        <a class="btn btn-ghost btn-sm" href="map.html?account=${encodeURIComponent(opp.account)}&seller=${s.id}" style="padding:3px 8px;color:var(--xero-blue);border-color:var(--xero-blue);" title="Create Mutual Action Plan">
+          <i class="ti ti-map-check"></i> MAP
+        </a>
         <button class="btn btn-ghost btn-sm" onclick="deleteOpp('${s.id}', ${i})" style="padding:3px 8px;color:var(--red);border-color:var(--red);">
           <i class="ti ti-trash"></i>
         </button>
@@ -2631,6 +2642,52 @@ function loadGleanCreds() {
 
 function skipApiKey() {
   closeModal('apiKeyModal');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CLAUDE-IN-THE-LOOP GLEAN SYNC
+   Generates a prompt for a work Claude account that has the Glean
+   connector. Claude pulls Gong + Salesforce data and returns JSON in
+   this dashboard's exact import format.
+═══════════════════════════════════════════════════════════════════════ */
+function copyClaudePrompt() {
+  const names = state.sellers.map(sellerFullName);
+  const prompt = `You are helping me populate my team coaching dashboard. Use the Glean connector to research each of these team members, then output ONE JSON code block in exactly the format below.
+
+Team members: ${names.join(', ')}
+
+For EACH person, search Glean for:
+1. Their pipeline/opportunities — search "[name] quarterly plan FY27" and "[name] pipeline opportunities Salesforce" (data surfaces from Google Drive planning decks, deal desk sheets and overdue opps sheets)
+2. Their Gong calls — search their name with the app filter set to Gong; capture call title, date, and talk ratio if available
+
+Then output ONLY a single JSON code block (no commentary inside it) matching this exact schema:
+
+{
+  "sellers": [
+    {
+      "id": "seller_<random9chars>",
+      "first": "<first name>", "last": "<last name>",
+      "territory": "<patch, e.g. VIC Partner Sales>",
+      "color": "<one of #1AB4D7 #8b5cf6 #22c55e #f59e0b #ef4444 #ec4899 #0ea5e9 #14b8a6>",
+      "quota": <attainment % as number, 0 if unknown>,
+      "gong": <avg gong score 0-100, 0 if unknown>,
+      "calls": <call count>, "emails": <email count>, "meetings": <meeting count>,
+      "opps": <open opp count>, "demos": <demo count>,
+      "capabilities": {},
+      "pipeline": [ { "account": "<name>", "stage": "<Prospecting|Discovery|Demo / Eval|Proposal|Negotiation|Closed Won|Closed Lost>", "value": <number>, "close": "YYYY-MM-DD" } ],
+      "gongCalls": [ { "id": "gc_<random>", "date": "YYYY-MM-DD", "focus": "Imported", "score": 0, "talkRatio": <number or null>, "title": "<call title>", "moments": [], "recommendation": "", "ts": <unix ms of date> } ],
+      "notes": [],
+      "grow": {}
+    }
+  ]
+}
+
+Rules: use 0 / empty arrays where data is unavailable — never invent numbers. Use real account names from Glean results. After the JSON block, list which sources you used.
+
+When done I will import this via the dashboard's Import JSON button.`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    showToast('Claude sync prompt copied ✓ — paste it into your work Claude (with Glean connected), then Import JSON here');
+  }).catch(() => showToast('Could not copy — clipboard blocked', 'error'));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

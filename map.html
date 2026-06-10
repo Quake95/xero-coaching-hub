@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mutual Action Plan — Xero Coaching Hub</title>
+<meta name="description" content="Interactive Mutual Action Plan builder. Shared working document between a Xero rep and an accounting firm — commitments, decisions, phases, live status.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231AB4D7'/%3E%3Ctext x='16' y='22' font-size='17' font-weight='bold' font-family='Arial' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --xero-blue: #1AB4D7; --xero-blue-dark: #0f9bba; --xero-blue-light: #e8f8fc;
+  --bg: #f4f6f9; --card-bg: #fff; --border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b; --text-light: #94a3b8;
+  --green: #22c55e; --green-bg: #f0fdf4; --amber: #f59e0b; --amber-bg: #fffbeb;
+  --red: #ef4444; --red-bg: #fef2f2; --purple: #8b5cf6;
+  --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; }
+a { color:var(--xero-blue-dark); text-decoration:none; }
+button { cursor:pointer; font-family:var(--font); }
+input,textarea,select { font-family:var(--font); font-size:13px; }
+
+#topbar { background:#111920; color:#fff; padding:0 20px; height:56px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:50; }
+.logo-icon { width:30px; height:30px; background:var(--xero-blue); border-radius:7px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; }
+#topbar .t-title { font-weight:600; font-size:15px; }
+#topbar .t-sub { color:#94a3b8; font-size:11.5px; }
+#topbar .t-actions { margin-left:auto; display:flex; gap:8px; align-items:center; }
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 80px; }
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:16px; }
+.card h2 { font-size:15px; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.card h2 .ti { color:var(--xero-blue); }
+.card .sub { color:var(--text-muted); font-size:12.5px; margin-bottom:14px; }
+
+.btn { border:1px solid var(--border); background:#fff; border-radius:7px; padding:7px 14px; font-size:13px; font-weight:500; display:inline-flex; align-items:center; gap:6px; color:var(--text); }
+.btn:hover { border-color:var(--xero-blue); color:var(--xero-blue-dark); }
+.btn-primary { background:var(--xero-blue); border-color:var(--xero-blue); color:#fff; }
+.btn-primary:hover { background:var(--xero-blue-dark); color:#fff; }
+.btn-ghost { background:transparent; }
+.btn-sm { padding:4px 10px; font-size:12px; }
+.btn-danger { color:var(--red); border-color:#fecaca; }
+
+.form-label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em; }
+.form-control { width:100%; border:1px solid var(--border); border-radius:7px; padding:8px 10px; background:#fff; color:var(--text); }
+.form-control:focus { outline:none; border-color:var(--xero-blue); }
+textarea.form-control { resize:vertical; min-height:60px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); padding:8px 10px; border-bottom:2px solid var(--border); }
+td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+td input, td select { width:100%; border:1px solid transparent; border-radius:5px; padding:5px 6px; background:transparent; }
+td input:hover, td select:hover { border-color:var(--border); background:#fff; }
+td input:focus, td select:focus { outline:none; border-color:var(--xero-blue); background:#fff; }
+
+.status-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; border:none; white-space:nowrap; }
+.st-notstarted { background:#f1f5f9; color:var(--text-muted); }
+.st-inprogress { background:var(--amber-bg); color:#b45309; }
+.st-done { background:var(--green-bg); color:#15803d; }
+
+.add-row-btn { margin-top:8px; }
+.del-row { color:var(--text-light); background:none; border:none; font-size:15px; padding:2px; }
+.del-row:hover { color:var(--red); }
+
+.phase-row { display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+.phase-num { width:26px; height:26px; border-radius:50%; background:var(--xero-blue-light); color:var(--xero-blue-dark); font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+#toast { position:fixed; bottom:24px; right:24px; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:500; z-index:9999; transition:opacity .3s; box-shadow:0 4px 12px rgba(0,0,0,.15); background:#1e293b; color:#fff; opacity:0; pointer-events:none; }
+
+.progress-wrap { background:var(--bg); border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.progress-bar { flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--green); border-radius:4px; transition:width .3s; }
+
+.map-list-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; cursor:pointer; transition:border-color .15s; background:#fff; }
+.map-list-item:hover { border-color:var(--xero-blue); }
+
+.share-banner { background:var(--xero-blue-light); border-radius:8px; padding:12px 16px; font-size:13px; color:var(--xero-blue-dark); margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.share-banner code { background:#fff; padding:4px 8px; border-radius:5px; font-size:12px; word-break:break-all; flex:1; min-width:200px; }
+
+.client-header { text-align:center; padding:30px 20px 10px; }
+.client-header h1 { font-size:24px; margin-bottom:6px; }
+.client-header .meta { color:var(--text-muted); font-size:13px; }
+.section-view h3 { font-size:14px; font-weight:700; margin:22px 0 8px; display:flex; align-items:center; gap:8px; }
+.section-view h3 .ti { color:var(--xero-blue); }
+.purpose-quote { background:var(--xero-blue-light); border-left:3px solid var(--xero-blue); padding:12px 16px; border-radius:0 8px 8px 0; font-size:14px; }
+
+.offline-note { background:var(--amber-bg); border-radius:8px; padding:10px 14px; font-size:12.5px; color:#92400e; margin-bottom:14px; }
+.hidden { display:none !important; }
+@media print {
+  #topbar, .no-print { display:none !important; }
+  body { background:#fff; }
+  .card { box-shadow:none; border:none; padding:10px 0; }
+}
+@media (max-width: 700px) {
+  .form-row { grid-template-columns:1fr; }
+  table { font-size:12px; }
+  th,td { padding:6px 6px; }
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo-icon">M</div>
+  <div>
+    <div class="t-title">Mutual Action Plan</div>
+    <div class="t-sub" id="topbarSub">Xero · shared working document</div>
+  </div>
+  <div class="t-actions no-print" id="topbarActions"></div>
+</div>
+
+<div class="wrap" id="app"></div>
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   CONFIG — Supabase (anon key is public by design; data protected by
+   unguessable share tokens. PoC-level security.)
+═══════════════════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://qdjvpjlnjflrjwecdqrd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Wj5OMjb8ho9Z6wRTV_gfuA_RwqBB61n';
+let sb = null;
+if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+const CM_BASE = 'https://xero-change-management.vercel.app';
+const STORAGE_KEY = 'xero_coaching_v2';      // dashboard data (same origin)
+const LOCAL_MAPS_KEY = 'xero_maps_v1';        // local cache of created maps
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════════ */
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+function token(){ return [...crypto.getRandomValues(new Uint8Array(18))].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function todayPlus(days){ return new Date(Date.now()+days*86400000).toISOString().split('T')[0]; }
+let toastT;
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.style.background=err?'var(--red)':'#1e293b'; t.style.opacity='1'; clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity='0',3000); }
+function localMaps(){ try { return JSON.parse(localStorage.getItem(LOCAL_MAPS_KEY)||'[]'); } catch(e){ return []; } }
+function saveLocalMaps(list){ localStorage.setItem(LOCAL_MAPS_KEY, JSON.stringify(list)); }
+function dashboardData(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); } catch(e){ return {}; } }
+
+const STATUSES = ['Not started','In progress','Done'];
+function statusClass(s){ return s==='Done'?'st-done':s==='In progress'?'st-inprogress':'st-notstarted'; }
+function cycleStatus(s){ return STATUSES[(STATUSES.indexOf(s)+1)%STATUSES.length]; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MAP DOCUMENT MODEL — mirrors the change-management MAP template
+═══════════════════════════════════════════════════════════════════════ */
+function newMapDoc(account, aeName, seed) {
+  seed = seed || {};
+  return {
+    account: account || '',
+    aeName: aeName || '',
+    purpose: seed.purpose || `Migrate ${account||'[Firm name]'} to Xero practice management, ledgers, workpapers and tax over the agreed timeline. Success means a smooth transition without disrupting client service or driving staff turnover.`,
+    owners: seed.owners || [
+      { side: account||'Firm', name:'', role:'Executive sponsor' },
+      { side: account||'Firm', name:'', role:'Operational owner / practice manager' },
+      { side: 'Xero', name: aeName||'', role:'Relationship lead' },
+      { side: 'Xero', name:'', role:'Implementation / technical owner' }
+    ],
+    phases: seed.phases || [
+      { name:'Discovery & Design', dates:'' },
+      { name:'Configuration & Pilot', dates:'' },
+      { name:'Wave rollout', dates:'' },
+      { name:'Stabilisation', dates:'' },
+      { name:'Optimisation', dates:'' }
+    ],
+    commitments: seed.commitments || [
+      { owner:'', what:'Provide current stack documentation', due: todayPlus(7), status:'Not started', notes:'' },
+      { owner: aeName||'Rep', what:'Complete change readiness assessment', due: todayPlus(14), status:'Not started', notes:'' },
+      { owner:'', what:'Schedule partner alignment workshop', due: todayPlus(21), status:'Not started', notes:'' },
+      { owner:'', what:'Identify and confirm 2 champions', due: todayPlus(21), status:'Not started', notes:'' }
+    ],
+    decisions: seed.decisions || [],
+    questions: seed.questions || [],
+    risks: seed.risks || [],
+    commercials: seed.commercials || 'Baseline subscription scope: [list]\nMigration services scope: [list]\nInvestment: $[X] baseline annual + $[Y] migration\nPayment milestones: [dates and amounts]',
+    context: seed.context || []
+  };
+}
+
+/* Seed a MAP from dashboard data for an account */
+function seedFromDashboard(account, sellerId) {
+  const data = dashboardData();
+  const sellers = data.sellers || [];
+  const seller = sellers.find(s => s.id === sellerId) || sellers.find(s => (s.pipeline||[]).some(o => o.account === account));
+  const seed = {};
+  const context = [];
+  if (seller) {
+    seed.aeName = seller.first + ' ' + seller.last;
+    const opp = (seller.pipeline||[]).find(o => o.account === account);
+    if (opp) context.push(`Pipeline: ${opp.stage}${opp.value?' · $'+opp.value:''}${opp.close?' · target close '+opp.close:''}`);
+    (seller.gongCalls||[]).filter(c => (c.title||'').toLowerCase().includes((account||'').toLowerCase().split(' ')[0]||'~')).slice(0,5)
+      .forEach(c => context.push(`Call ${c.date}: ${c.title}${c.score?' (score '+c.score+')':''}`));
+  }
+  seed.context = context;
+  return seed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PERSISTENCE — Supabase with local fallback
+═══════════════════════════════════════════════════════════════════════ */
+async function saveMap(map) {
+  map.updated_at = new Date().toISOString();
+  // local cache always
+  const list = localMaps();
+  const i = list.findIndex(m => m.share_token === map.share_token);
+  if (i >= 0) list[i] = map; else list.push(map);
+  saveLocalMaps(list);
+  if (!sb) return { ok:true, local:true };
+  const { error } = await sb.from('maps').upsert({
+    share_token: map.share_token,
+    account: map.doc.account,
+    ae_name: map.doc.aeName,
+    data: map.doc,
+    updated_at: map.updated_at
+  }, { onConflict: 'share_token' });
+  if (error) { console.error(error); return { ok:false, error }; }
+  return { ok:true };
+}
+
+async function loadMapByToken(t) {
+  if (sb) {
+    const { data, error } = await sb.from('maps').select('*').eq('share_token', t).maybeSingle();
+    if (data) return { share_token: data.share_token, doc: data.data, updated_at: data.updated_at };
+    if (error) console.error(error);
+  }
+  const local = localMaps().find(m => m.share_token === t);
+  return local || null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ROUTING
+═══════════════════════════════════════════════════════════════════════ */
+let current = null;       // { share_token, doc, updated_at }
+let clientMode = false;   // shared/client view
+
+function route() {
+  const h = location.hash;
+  const m = h.match(/^#\/m\/([a-f0-9]+)/);
+  if (m) { clientMode = true; openShared(m[1]); return; }
+  clientMode = false;
+  const params = new URLSearchParams(location.search);
+  renderBuilderHome(params.get('account'), params.get('seller'));
+}
+window.addEventListener('hashchange', route);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BUILDER HOME — list + create
+═══════════════════════════════════════════════════════════════════════ */
+function renderBuilderHome(prefillAccount, prefillSeller) {
+  document.getElementById('topbarActions').innerHTML = `<a class="btn btn-sm" href="index.html" style="background:#fff;"><i class="ti ti-layout-dashboard"></i> Coaching Hub</a>
+    <a class="btn btn-sm" href="${CM_BASE}/templates/mutual-action-plan" target="_blank" rel="noopener" style="background:#fff;"><i class="ti ti-book"></i> MAP guide</a>`;
+
+  const data = dashboardData();
+  const sellers = data.sellers || [];
+  const accounts = [];
+  sellers.forEach(s => (s.pipeline||[]).forEach(o => accounts.push({ account:o.account, seller:s, stage:o.stage })));
+
+  const maps = localMaps().slice().sort((a,b) => (b.updated_at||'').localeCompare(a.updated_at||''));
+
+  document.getElementById('app').innerHTML = `
+    ${!sb ? `<div class="offline-note"><strong>Supabase not configured</strong> — MAPs save to this browser only and share links won't work for clients yet. Configure in the console: <code>localStorage.setItem('map_supabase_url','...'); localStorage.setItem('map_supabase_key','...')</code> or redeploy with keys baked in.</div>` : ''}
+    <div class="card">
+      <h2><i class="ti ti-file-plus"></i> New Mutual Action Plan</h2>
+      <div class="sub">Pick an account from your pipeline (pulled from the Coaching Hub on this browser) or type one. The MAP pre-fills from your stored deal data and Gong calls.</div>
+      <div class="form-row">
+        <div>
+          <label class="form-label">Account / Firm</label>
+          <input class="form-control" id="newAccount" list="accountList" placeholder="e.g. Brightline Accounting" value="${esc(prefillAccount||'')}">
+          <datalist id="accountList">${accounts.map(a => `<option value="${esc(a.account)}">${esc(a.seller.first+' '+a.seller.last)} · ${esc(a.stage)}</option>`).join('')}</datalist>
+        </div>
+        <div>
+          <label class="form-label">Xero relationship lead</label>
+          <select class="form-control" id="newSeller">
+            <option value="">—</option>
+            ${sellers.map(s => `<option value="${esc(s.id)}" ${s.id===prefillSeller?'selected':''}>${esc(s.first+' '+s.last)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createMap()"><i class="ti ti-sparkles"></i> Create MAP</button>
+    </div>
+    <div class="card">
+      <h2><i class="ti ti-files"></i> Your MAPs</h2>
+      <div class="sub">${maps.length ? 'Click to open and edit. Share links live under each MAP.' : 'No MAPs yet — create your first one above.'}</div>
+      ${maps.map(m => `
+        <div class="map-list-item" onclick="openEditor('${esc(m.share_token)}')">
+          <i class="ti ti-file-check" style="font-size:20px;color:var(--xero-blue);"></i>
+          <div style="flex:1;">
+            <div style="font-weight:600;">${esc(m.doc.account||'Untitled')}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${esc(m.doc.aeName||'')} · updated ${m.updated_at ? new Date(m.updated_at).toLocaleDateString() : '—'}</div>
+          </div>
+          <span class="status-pill ${statusClass('In progress')}">${m.doc.commitments.filter(c=>c.status==='Done').length}/${m.doc.commitments.length} done</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function createMap() {
+  const account = document.getElementById('newAccount').value.trim();
+  const sellerId = document.getElementById('newSeller').value;
+  if (!account) { toast('Enter an account name', true); return; }
+  const data = dashboardData();
+  const seller = (data.sellers||[]).find(s => s.id === sellerId);
+  const seed = seedFromDashboard(account, sellerId);
+  const doc = newMapDoc(account, seller ? seller.first+' '+seller.last : seed.aeName, seed);
+  current = { share_token: token(), doc, updated_at: new Date().toISOString() };
+  const r = await saveMap(current);
+  toast(r.ok ? 'MAP created ✓' : 'Saved locally — Supabase error', !r.ok);
+  renderEditor();
+}
+
+async function openEditor(t) {
+  const m = await loadMapByToken(t);
+  if (!m) { toast('MAP not found', true); return; }
+  current = m;
+  renderEditor();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EDITOR (rep view)
+═══════════════════════════════════════════════════════════════════════ */
+function shareUrl() { return location.origin + location.pathname + '#/m/' + current.share_token; }
+
+function renderEditor() {
+  const d = current.doc;
+  document.getElementById('topbarSub').textContent = d.account + ' · MAP';
+  document.getElementById('topbarActions').innerHTML = `
+    <button class="btn btn-sm" style="background:#fff;" onclick="route(); location.hash='';"><i class="ti ti-arrow-left"></i> All MAPs</button>
+    <button class="btn btn-sm" style="background:#fff;" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+    <button class="btn btn-sm btn-primary" onclick="persist(true)"><i class="ti ti-device-floppy"></i> Save</button>`;
+
+  const done = d.commitments.filter(c=>c.status==='Done').length;
+  const pct = d.commitments.length ? Math.round(done/d.commitments.length*100) : 0;
+
+  document.getElementById('app').innerHTML = `
+    <div class="share-banner no-print">
+      <i class="ti ti-link"></i> <strong>Client link:</strong>
+      <code id="shareUrl">${esc(shareUrl())}</code>
+      <button class="btn btn-sm" onclick="navigator.clipboard.writeText(shareUrl()).then(()=>toast('Link copied ✓'))"><i class="ti ti-copy"></i> Copy</button>
+      ${!sb ? '<span style="color:var(--red);font-size:12px;">⚠ Supabase not configured — link will not work for clients yet</span>' : ''}
+    </div>
+
+    <div class="progress-wrap">
+      <strong style="font-size:13px;">Commitments</strong>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+      <span style="font-size:13px;color:var(--text-muted);">${done}/${d.commitments.length} done</span>
+    </div>
+
+    ${d.context && d.context.length ? `
+    <div class="card no-print" style="background:var(--xero-blue-light);border-color:var(--xero-blue);">
+      <h2><i class="ti ti-bulb"></i> Deal context (from Coaching Hub — not visible to client)</h2>
+      ${d.context.map(c => `<div style="font-size:13px;padding:3px 0;">· ${esc(c)}</div>`).join('')}
+    </div>` : ''}
+
+    <div class="card">
+      <h2><i class="ti ti-flag"></i> 1 · Purpose</h2>
+      <div class="sub">What we're doing together and what success looks like.</div>
+      <textarea class="form-control" rows="3" oninput="d_('purpose',this.value)">${esc(d.purpose)}</textarea>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-users"></i> 2 · Partners & owners</h2>
+      <table><thead><tr><th>Side</th><th>Lead</th><th>Role</th><th class="no-print"></th></tr></thead>
+      <tbody>${d.owners.map((o,i)=>`
+        <tr>
+          <td><input value="${esc(o.side)}" oninput="row_('owners',${i},'side',this.value)"></td>
+          <td><input value="${esc(o.name)}" placeholder="Name" oninput="row_('owners',${i},'name',this.value)"></td>
+          <td><input value="${esc(o.role)}" oninput="row_('owners',${i},'role',this.value)"></td>
+          <td class="no-print"><button class="del-row" onclick="delRow('owners',${i})"><i class="ti ti-x"></i></button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('owners',{side:'',name:'',role:''})"><i class="ti ti-plus"></i> Add owner</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-timeline"></i> 3 · Phase plan</h2>
+      ${d.phases.map((p,i)=>`
+        <div class="phase-row">
+          <div class="phase-num">${i+1}</div>
+          <input class="form-control" style="flex:2;" value="${esc(p.name)}" oninput="row_('phases',${i},'name',this.value)">
+          <input class="form-control" style="flex:1;" placeholder="dates e.g. Jul–Aug" value="${esc(p.dates)}" oninput="row_('phases',${i},'dates',this.value)">
+          <button class="del-row no-print" onclick="delRow('phases',${i})"><i class="ti ti-x"></i></button>
+        </div>`).join('')}
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('phases',{name:'',dates:''})"><i class="ti ti-plus"></i> Add phase</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-checklist"></i> 4 · Commitments</h2>
+      <div class="sub">The heart of the MAP. Click a status to cycle it. Both sides own commitments.</div>
+      <table><thead><tr><th>Owner</th><th style="width:34%;">Commitment</th><th>Due</th><th>Status</th><th>Notes</th><th class="no-print"></th></tr></thead>
+      <tbody>${d.commitments.map((c,i)=>`
+        <tr>
+          <td><input value="${esc(c.owner)}" placeholder="Who" oninput="row_('commitments',${i},'owner',this.value)"></td>
+          <td><input value="${esc(c.what)}" oninput="row_('commitments',${i},'what',this.value)"></td>
+          <td><input type="date" value="${esc(c.due)}" oninput="row_('commitments',${i},'due',this.value)"></td>
+          <td><button class="status-pill ${statusClass(c.status)}" onclick="cycleRow(${i})">${esc(c.status)}</button></td>
+          <td><input value="${esc(c.notes)}" placeholder="—" oninput="row_('commitments',${i},'notes',this.value)"></td>
+          <td class="no-print"><button class="del-row" onclick="delRow('commitments',${i})"><i class="ti ti-x"></i></button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('commitments',{owner:'',what:'',due:'',status:'Not started',notes:''})"><i class="ti ti-plus"></i> Add commitment</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-gavel"></i> 5 · Decisions made</h2>
+      <table><thead><tr><th>Date</th><th>Decision</th><th>Decision-makers</th><th class="no-print"></th></tr></thead>
+      <tbody>${d.decisions.map((x,i)=>`
+        <tr>
+          <td><input type="date" value="${esc(x.date)}" oninput="row_('decisions',${i},'date',this.value)"></td>
+          <td><input value="${esc(x.decision)}" oninput="row_('decisions',${i},'decision',this.value)"></td>
+          <td><input value="${esc(x.makers)}" oninput="row_('decisions',${i},'makers',this.value)"></td>
+          <td class="no-print"><button class="del-row" onclick="delRow('decisions',${i})"><i class="ti ti-x"></i></button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('decisions',{date:'',decision:'',makers:''})"><i class="ti ti-plus"></i> Add decision</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-help-circle"></i> 6 · Open questions</h2>
+      <table><thead><tr><th>Question</th><th>Owner</th><th>Status</th><th class="no-print"></th></tr></thead>
+      <tbody>${d.questions.map((x,i)=>`
+        <tr>
+          <td><input value="${esc(x.question)}" oninput="row_('questions',${i},'question',this.value)"></td>
+          <td><input value="${esc(x.owner)}" oninput="row_('questions',${i},'owner',this.value)"></td>
+          <td><select onchange="row_('questions',${i},'status',this.value)"><option ${x.status!=='Closed'?'selected':''}>Open</option><option ${x.status==='Closed'?'selected':''}>Closed</option></select></td>
+          <td class="no-print"><button class="del-row" onclick="delRow('questions',${i})"><i class="ti ti-x"></i></button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('questions',{question:'',owner:'',status:'Open'})"><i class="ti ti-plus"></i> Add question</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-alert-triangle"></i> 7 · Risks & watch items</h2>
+      <div class="sub">Highlights only — keep the full register separate. <a href="${CM_BASE}/discovery/risk-assessment" target="_blank" rel="noopener">Risk assessment guide ↗</a></div>
+      <table><thead><tr><th>Risk</th><th>Owner</th><th>Status</th><th class="no-print"></th></tr></thead>
+      <tbody>${d.risks.map((x,i)=>`
+        <tr>
+          <td><input value="${esc(x.risk)}" oninput="row_('risks',${i},'risk',this.value)"></td>
+          <td><input value="${esc(x.owner)}" oninput="row_('risks',${i},'owner',this.value)"></td>
+          <td><input value="${esc(x.status)}" placeholder="Mitigating / Closed" oninput="row_('risks',${i},'status',this.value)"></td>
+          <td class="no-print"><button class="del-row" onclick="delRow('risks',${i})"><i class="ti ti-x"></i></button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="btn btn-sm add-row-btn no-print" onclick="addRow('risks',{risk:'',owner:'',status:''})"><i class="ti ti-plus"></i> Add risk</button>
+    </div>
+
+    <div class="card">
+      <h2><i class="ti ti-receipt"></i> 8 · Commercial summary</h2>
+      <div class="sub">High level only — detail lives in the proposal. Keep baseline and migration separated.</div>
+      <textarea class="form-control" rows="4" oninput="d_('commercials',this.value)">${esc(d.commercials)}</textarea>
+    </div>
+
+    <div class="no-print" style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-danger" onclick="deleteCurrent()"><i class="ti ti-trash"></i> Delete MAP</button>
+      <button class="btn btn-primary" onclick="persist(true)"><i class="ti ti-device-floppy"></i> Save MAP</button>
+    </div>`;
+}
+
+/* editor mutations (debounced autosave) */
+let saveT;
+function queueSave(){ clearTimeout(saveT); saveT = setTimeout(()=>persist(false), 1200); }
+function d_(k,v){ current.doc[k]=v; queueSave(); }
+function row_(arr,i,k,v){ current.doc[arr][i][k]=v; queueSave(); }
+function addRow(arr,obj){ current.doc[arr].push(obj); persist(false); renderEditor(); }
+function delRow(arr,i){ current.doc[arr].splice(i,1); persist(false); renderEditor(); }
+function cycleRow(i){ current.doc.commitments[i].status = cycleStatus(current.doc.commitments[i].status); persist(false); renderEditor(); }
+async function persist(announce){ const r = await saveMap(current); if (announce) toast(r.ok ? (r.local?'Saved to this browser ✓':'Saved ✓') : 'Save failed — check Supabase', !r.ok); }
+async function deleteCurrent(){
+  if (!confirm('Delete this MAP for ' + current.doc.account + '? The client link will stop working.')) return;
+  saveLocalMaps(localMaps().filter(m => m.share_token !== current.share_token));
+  if (sb) await sb.from('maps').delete().eq('share_token', current.share_token);
+  current = null; toast('MAP deleted'); renderBuilderHome();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHARED / CLIENT VIEW — read structure, tick statuses, add notes
+═══════════════════════════════════════════════════════════════════════ */
+async function openShared(t) {
+  document.getElementById('topbarActions').innerHTML = '';
+  document.getElementById('app').innerHTML = '<div class="card" style="text-align:center;padding:50px;color:var(--text-muted);">Loading plan…</div>';
+  const m = await loadMapByToken(t);
+  if (!m) {
+    document.getElementById('app').innerHTML = '<div class="card" style="text-align:center;padding:50px;"><h2 style="justify-content:center;">Plan not found</h2><div class="sub">This link may have expired or the plan was removed.</div></div>';
+    return;
+  }
+  current = m;
+  renderShared();
+}
+
+function renderShared() {
+  const d = current.doc;
+  document.getElementById('topbarSub').textContent = d.account + ' × Xero';
+  document.getElementById('topbarActions').innerHTML = `<button class="btn btn-sm" style="background:#fff;" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>`;
+  const done = d.commitments.filter(c=>c.status==='Done').length;
+  const pct = d.commitments.length ? Math.round(done/d.commitments.length*100) : 0;
+
+  document.getElementById('app').innerHTML = `
+    <div class="client-header">
+      <h1>${esc(d.account)} × Xero — Mutual Action Plan</h1>
+      <div class="meta">Shared working document · last updated ${current.updated_at ? new Date(current.updated_at).toLocaleString() : '—'}</div>
+    </div>
+
+    <div class="progress-wrap">
+      <strong style="font-size:13px;">Progress</strong>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+      <span style="font-size:13px;color:var(--text-muted);">${done}/${d.commitments.length} commitments done</span>
+    </div>
+
+    <div class="card section-view">
+      <h3><i class="ti ti-flag"></i> Purpose</h3>
+      <div class="purpose-quote">${esc(d.purpose)}</div>
+
+      <h3><i class="ti ti-users"></i> Partners & owners</h3>
+      <table><thead><tr><th>Side</th><th>Lead</th><th>Role</th></tr></thead>
+      <tbody>${d.owners.map(o=>`<tr><td>${esc(o.side)}</td><td>${esc(o.name)||'—'}</td><td>${esc(o.role)}</td></tr>`).join('')}</tbody></table>
+
+      <h3><i class="ti ti-timeline"></i> Phase plan</h3>
+      ${d.phases.map((p,i)=>`<div class="phase-row"><div class="phase-num">${i+1}</div><div style="flex:2;font-weight:500;">${esc(p.name)}</div><div style="flex:1;color:var(--text-muted);">${esc(p.dates)||'dates TBC'}</div></div>`).join('')}
+
+      <h3><i class="ti ti-checklist"></i> Commitments <span style="font-weight:400;font-size:12px;color:var(--text-muted);">— click a status to update it</span></h3>
+      <table><thead><tr><th>Owner</th><th style="width:36%;">Commitment</th><th>Due</th><th>Status</th><th>Notes</th></tr></thead>
+      <tbody>${d.commitments.map((c,i)=>`
+        <tr>
+          <td>${esc(c.owner)||'—'}</td>
+          <td>${esc(c.what)}</td>
+          <td>${esc(c.due)||'—'}</td>
+          <td><button class="status-pill ${statusClass(c.status)}" onclick="clientCycle(${i})">${esc(c.status)}</button></td>
+          <td><input value="${esc(c.notes)}" placeholder="Add a note…" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;width:100%;" onchange="clientNote(${i},this.value)"></td>
+        </tr>`).join('')}</tbody></table>
+
+      ${d.decisions.length ? `<h3><i class="ti ti-gavel"></i> Decisions made</h3>
+      <table><thead><tr><th>Date</th><th>Decision</th><th>Decision-makers</th></tr></thead>
+      <tbody>${d.decisions.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.decision)}</td><td>${esc(x.makers)}</td></tr>`).join('')}</tbody></table>` : ''}
+
+      ${d.questions.length ? `<h3><i class="ti ti-help-circle"></i> Open questions</h3>
+      <table><thead><tr><th>Question</th><th>Owner</th><th>Status</th></tr></thead>
+      <tbody>${d.questions.map(x=>`<tr><td>${esc(x.question)}</td><td>${esc(x.owner)}</td><td>${esc(x.status)}</td></tr>`).join('')}</tbody></table>` : ''}
+
+      ${d.risks.length ? `<h3><i class="ti ti-alert-triangle"></i> Risks & watch items</h3>
+      <table><thead><tr><th>Risk</th><th>Owner</th><th>Status</th></tr></thead>
+      <tbody>${d.risks.map(x=>`<tr><td>${esc(x.risk)}</td><td>${esc(x.owner)}</td><td>${esc(x.status)}</td></tr>`).join('')}</tbody></table>` : ''}
+
+      <h3><i class="ti ti-receipt"></i> Commercial summary</h3>
+      <div style="white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:12px 16px;font-size:13px;">${esc(d.commercials)}</div>
+    </div>
+    <div style="text-align:center;color:var(--text-light);font-size:12px;" class="no-print">Updates save automatically and are visible to both sides.</div>`;
+}
+
+async function clientCycle(i) {
+  current.doc.commitments[i].status = cycleStatus(current.doc.commitments[i].status);
+  const r = await saveMap(current);
+  toast(r.ok ? 'Status updated ✓' : 'Could not save — try again', !r.ok);
+  renderShared();
+}
+async function clientNote(i, v) {
+  current.doc.commitments[i].notes = v;
+  const r = await saveMap(current);
+  toast(r.ok ? 'Note saved ✓' : 'Could not save', !r.ok);
+}
+
+/* refresh shared view when tab refocuses (see the other side's updates) */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && clientMode && current) openShared(current.share_token);
+});
+
+route();
+</script>
+</body>
+</html>
