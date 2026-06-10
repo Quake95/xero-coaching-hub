@@ -1310,7 +1310,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 /* ═══════════════════════════════════════════════════════════════════════
    DATA LAYER
 ═══════════════════════════════════════════════════════════════════════ */
-const STORAGE_KEY = 'xero_coaching_v4'; // bumped so the real-data seed replaces any cached demo data
+const STORAGE_KEY = 'xero_coaching';      // stable — do not bump; merge-on-load handles data refreshes
+const SEED_VERSION = '2026-06-10-2';        // bump (e.g. to today's date) whenever seedData() content changes
 const AVATARS_COLORS = ['#1AB4D7','#8b5cf6','#22c55e','#f59e0b','#ef4444','#ec4899','#0ea5e9','#14b8a6'];
 
 let state = {
@@ -1330,13 +1331,20 @@ function loadState() {
       state = { ...state, ...saved };
     }
   } catch(e) {}
-  if (!state.sellers || !state.sellers.length) seedData();
+  if (!state.sellers || !state.sellers.length) {
+    seedData();
+    saveState();
+  } else if (state.seedVersion !== SEED_VERSION) {
+    mergeSeed();
+    saveState();
+  }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     apiKey: state.apiKey,
-    sellers: state.sellers
+    sellers: state.sellers,
+    seedVersion: SEED_VERSION
   }));
 }
 
@@ -1513,7 +1521,50 @@ function seedData() {
     })
 
   ];
-  saveState();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MERGE-ON-LOAD
+   When SEED_VERSION changes (nightly Glean refresh), merge the new seed
+   into saved state instead of replacing it.
+   Machine-owned (overwritten from seed): territory, quota, calls, opps,
+     pipeline, imported Gong calls, the 'Glean Sync' note.
+   Human-owned (always preserved): capabilities, GROW plans, all other
+     notes, AI-analysed calls + scores, gong score, emails/meetings/demos,
+     colour, and any sellers added manually.
+═══════════════════════════════════════════════════════════════════════ */
+function mergeSeed() {
+  const existing = state.sellers;
+  const norm = s => ((s.first||'') + ' ' + (s.last||'')).toLowerCase().trim();
+  // Build fresh seed without touching saved state
+  state.sellers = [];
+  seedData();
+  const fresh = state.sellers;
+  state.sellers = existing;
+
+  const merged = fresh.map(f => {
+    const old = existing.find(o => norm(o) === norm(f));
+    if (!old) return f; // new team member from seed
+    // machine-owned updates
+    old.territory = f.territory;
+    old.quota = f.quota;
+    old.calls = f.calls;
+    old.opps = f.opps;
+    old.pipeline = f.pipeline;
+    // gong calls: keep everything existing, add only new imports
+    if (!old.gongCalls) old.gongCalls = [];
+    const has = c => old.gongCalls.some(e =>
+      (c.gleanUrl && e.gleanUrl === c.gleanUrl) || (e.title === c.title && e.date === c.date));
+    (f.gongCalls||[]).forEach(c => { if (!has(c)) old.gongCalls.push(c); });
+    old.gongCalls.sort((a,b) => (b.ts||0) - (a.ts||0));
+    // notes: refresh only the Glean Sync note; keep all human notes
+    const humanNotes = (old.notes||[]).filter(n => n.type !== 'Glean Sync');
+    old.notes = [...(f.notes||[]).filter(n => n.type === 'Glean Sync'), ...humanNotes];
+    return old;
+  });
+  // preserve user-added sellers that aren't in the seed
+  existing.forEach(o => { if (!fresh.some(f => norm(f) === norm(o))) merged.push(o); });
+  state.sellers = merged;
 }
 
 function makeSeller(first, last, territory, color, data) {
